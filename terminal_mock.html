@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TUI Demo Mock</title>
+    <style>
+        :root {
+            --accent-cyan: #00ffff;
+            --accent-purple: #ff00ff;
+            --accent-orange: #ffff00;
+            --accent-green: #00ff00;
+            --text-secondary: #cccccc;
+        }
+        body {
+            background: #000;
+            color: var(--accent-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2rem;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            height: 100vh;
+        }
+        pre {
+            margin: 0;
+            line-height: 1.1;
+            font-size: 14px;
+        }
+        .banner { margin-bottom: 20px; }
+        .menu-box {
+            border: 1px solid var(--accent-purple);
+            padding: 0;
+            width: 440px;
+            margin-top: 10px;
+        }
+        .menu-header {
+            border-bottom: 1px solid var(--accent-purple);
+            padding: 5px 15px;
+            font-weight: bold;
+            color: var(--accent-purple);
+        }
+        .menu-item {
+            padding: 5px 15px;
+            color: var(--text-secondary);
+        }
+        .menu-item.selected {
+            background: var(--accent-cyan);
+            color: #000;
+            font-weight: bold;
+        }
+        .instructions {
+            color: var(--accent-orange);
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .status-msg {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            width: 440px;
+            margin-top: 10px;
+            display: none;
+        }
+        .progress-bar {
+            border: 1px solid var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            padding: 2px;
+        }
+        .progress-fill {
+            height: 15px;
+            background: var(--accent-green);
+            width: 0%;
+        }
+
+        /* Animation Classes */
+        .fade-in { animation: fadeIn 0.3s forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .typing::after {
+            content: '|';
+            animation: blink 0.8s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div id="terminal">
+        <pre class="banner">
++==================================================================+
+|  _____ _   _  ____ ______   _______ _____ ___  _   _            |
+| | ____| \ | |/ ___|  _ \ \ / /_   _/ ____/ _ \| \ | |           |
+| |  _| |  \| | |   | |_) \ V /  | || |   | | | |  \| |           |
+| | |___| |\  | |___|  _ &lt; | |   | || |___| |_| | |\  |           |
+| |_____|_| \_|\____|_| \_\_|_|   |_| \_____\___/|_| \_|           |
+|                                                                  |
+|            [*] File Encryption & Decryption Tool [*]            |
++==================================================================+
+        </pre>
+
+        <div id="menuContent">
+            <div class="menu-box">
+                <div class="menu-header">+------------------------------------------+<br>|  MAIN MENU                               |</div>
+                <div id="item1" class="menu-item selected">|  > 1. Encrypt File                       |</div>
+                <div id="item2" class="menu-item">|    2. Decrypt File                       |</div>
+                <div id="item3" class="menu-item">|    3. Key Recovery                       |</div>
+                <div id="item4" class="menu-item">|    4. Settings                           |</div>
+                <div class="menu-header" style="border-top: 1px solid var(--accent-purple); border-bottom: none;">+------------------------------------------+</div>
+            </div>
+            <div class="instructions">   UP/DOWN: Navigate  ENTER: Select  q: Quit</div>
+        </div>
+
+        <div id="actionContent" style="display:none;">
+             <div class="status-msg" id="prompt">Enter filename to encrypt: <span class="typing" id="typedFile"></span></div>
+             <div class="status-msg" id="progLabel" style="display:none; color: var(--accent-green);">[SYSTEM] Processing...</div>
+             <div class="progress-container" id="progContainer">
+                 <div class="progress-bar">
+                     <div class="progress-fill" id="fill"></div>
+                 </div>
+                 <div style="margin-top: 5px;" id="perc">0%</div>
+             </div>
+             <div class="status-msg" id="successMsg" style="display:none; color: var(--accent-green);">
++------------------------------------------------+<br>
+|           [OK] Operation Complete              |<br>
++------------------------------------------------+
+             </div>
+        </div>
+    </div>
+
+    <script>
+        const sleep = ms => new Promise(r => r(setTimeout(r, ms)));
+        
+        async function runDemo() {
+            await sleep(1000);
+            
+            // 1. Move selection
+            const i1 = document.getElementById('item1');
+            const i2 = document.getElementById('item2');
+            
+            await sleep(800);
+            i1.classList.remove('selected');
+            i1.innerHTML = '|    1. Encrypt File                       |';
+            i2.classList.add('selected');
+            i2.innerHTML = '|  > 2. Decrypt File                       |';
+            
+            await sleep(600);
+            i2.classList.remove('selected');
+            i2.innerHTML = '|    2. Decrypt File                       |';
+            i1.classList.add('selected');
+            i1.innerHTML = '|  > 1. Encrypt File                       |';
+            
+            await sleep(1000);
+            
+            // 2. Clear menu, show prompt
+            document.getElementById('menuContent').style.display = 'none';
+            document.getElementById('actionContent').style.display = 'block';
+            
+            const filename = "financial_report.pdf";
+            const typed = document.getElementById('typedFile');
+            for(let char of filename) {
+                typed.textContent += char;
+                await sleep(100);
+            }
+            typed.classList.remove('typing');
+            
+            await sleep(1000);
+            
+            // 3. Show progress
+            document.getElementById('progLabel').style.display = 'block';
+            document.getElementById('progContainer').style.display = 'block';
+            
+            const fill = document.getElementById('fill');
+            const perc = document.getElementById('perc');
+            for(let p=0; p<=100; p+=5) {
+                fill.style.width = p + '%';
+                perc.textContent = p + '%';
+                await sleep(100);
+            }
+            
+            await sleep(500);
+            
+            // 4. Show success
+            document.getElementById('successMsg').style.display = 'block';
+            
+            await sleep(3000); // Wait at end for recording to catch up
+        }
+
+        runDemo();
+    </script>
+</body>
+</html>

@@ -1002,31 +1002,15 @@
                 <p class="subtitle">A multi-layered approach to file protection</p>
                 
                 <div class="feature-hub">
-                    <!-- Central Terminal (Authentic Replica) -->
-                    <div class="hub-central">
+                    <!-- Authentic Terminal Simulation (CSS/JS Powered) -->
+                    <div class="hub-central" id="terminal-sim-container" style="background: #000; position: relative; overflow: hidden; display: flex; flex-direction: column;">
                         <div class="hub-terminal-header">
                             <div class="hub-dot" style="background: #ff5f56;"></div>
                             <div class="hub-dot" style="background: #ffbd2e;"></div>
                             <div class="hub-dot" style="background: #27c93f;"></div>
                         </div>
-                        <div style="padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; line-height: 1.1; color: var(--accent-cyan); white-space: pre;">
-+==================================================================+
-|  _____ _   _  ____ ______   _______ _____ ___  _   _            |
-| | ____| \ | |/ ___|  _ \ \ / /_   _/ ____/ _ \| \ | |           |
-| |  _| |  \| | |   | |_) \ V /  | || |   | | | |  \| |           |
-| | |___| |\  | |___|  _ &lt; | |   | || |___| |_| | |\  |           |
-| |_____|_| \_|\____|_| \_\_|_|   |_| \_____\___/|_| \_|           |
-|                                                                  |
-|            [*] File Encryption & Decryption Tool [*]            |
-+==================================================================+
-
-<div style="color: var(--accent-purple); margin-top: 10px;">+------------------------------------------+
-|  MAIN MENU                               |
-+------------------------------------------+</div><div style="background: var(--accent-cyan); color: #000; font-weight: bold; width: 100%;">|  > 1. Encrypt File                       |</div><div style="color: var(--text-secondary);">|    2. Decrypt File                       |
-|    3. Key Recovery                       |
-|    4. Settings                           |
-+------------------------------------------+</div>
-<div style="color: var(--accent-orange); margin-top: 10px;">   UP/DOWN: Navigate  ENTER: Select  q: Quit</div>
+                        <div id="terminal-sim-content" style="padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; line-height: 1.1; color: var(--accent-cyan); white-space: pre; flex: 1;">
+                            <!-- Content injected via JS -->
                         </div>
                     </div>
 
@@ -1563,6 +1547,79 @@
         liveKey.addEventListener('input', () => processEncryption('encrypt')); // specific choice to update output on key change
 
 
+         // Terminal Simulation Logic for Slide 3
+        const BANNER_TEXT = `+==================================================================+
+|  _____ _   _  ____ ______   _______ _____ ___  _   _            |
+| | ____| \\ | |/ ___|  _ \\ \\ / /_   _/ ____/ _ \\| \\ | |           |
+| |  _| |  \\| | |   | |_) \\ V /  | || |   | | | |  \\| |           |
+| | |___| |\\  | |___|  _ < | |   | || |___| |_| | |\\  |           |
+| |_____|_| \\_|\\____|_| \\_\\|_|   |_| \\_____\\___/|_| \\_|           |
+|                                                                  |
+|            [*] File Encryption & Decryption Tool [*]            |
++==================================================================+`;
+
+        async function runTerminalSim() {
+            const container = document.getElementById('terminal-sim-content');
+            if (!container) return;
+
+            const sleep = ms => new Promise(r => setTimeout(r, ms));
+            
+            while(true) {
+                // RESET
+                container.innerHTML = BANNER_TEXT;
+                await sleep(1000);
+
+                // SHOW MENU
+                const menuHtml = `
+<div style="color: var(--accent-purple); margin-top: 10px;">+------------------------------------------+
+|  MAIN MENU                               |
++------------------------------------------+</div>
+<div style="background: var(--accent-cyan); color: #000; font-weight: bold;">|  > 1. Encrypt File                       |</div>
+<div style="color: var(--text-secondary);">|    2. Decrypt File                       |
+|    3. Key Recovery                       |
+|    4. Settings                           |
++------------------------------------------+</div>
+<div style="color: var(--accent-orange); margin-top:10px;">   UP/DOWN: Navigate  ENTER: Select  q: Quit</div>`;
+                
+                container.innerHTML = BANNER_TEXT + menuHtml;
+                await sleep(2000);
+
+                // ACTION: TYPING
+                container.innerHTML = BANNER_TEXT + `<div style="margin-top:20px;">Enter filename: <span id="sim-typing"></span>_</div>`;
+                const filename = "financial_report.pdf";
+                for(let char of filename) {
+                    const typingSpan = document.getElementById('sim-typing');
+                    if (typingSpan) typingSpan.textContent += char;
+                    await sleep(100);
+                }
+                await sleep(1000);
+
+                // PROGRESS
+                let progressHtml = `<div style="margin-top:20px; color: var(--accent-green);">[SYSTEM] Processing...</div>
+<div style="border: 1px solid var(--accent-cyan); width: 200px; padding: 2px; margin-top: 5px;">
+    <div id="sim-bar" style="height: 10px; background: var(--accent-green); width: 0%;"></div>
+</div>
+<div id="sim-perc" style="margin-top: 5px;">0%</div>`;
+                container.innerHTML = BANNER_TEXT + progressHtml;
+
+                for(let p=0; p<=100; p+=10) {
+                    const bar = document.getElementById('sim-bar');
+                    const perc = document.getElementById('sim-perc');
+                    if (bar) bar.style.width = p + '%';
+                    if (perc) perc.textContent = p + '%';
+                    await sleep(200);
+                }
+                await sleep(800);
+
+                // SUCCESS
+                container.innerHTML = BANNER_TEXT + `<div style="margin-top:20px; color: var(--accent-green);">
++------------------------------------------------+
+|           [OK] Operation Complete              |
++------------------------------------------------+</div>`;
+                await sleep(4000);
+            }
+        }
+
         // Init
         document.addEventListener('DOMContentLoaded', () => {
              updateSlide();
@@ -1570,7 +1627,8 @@
              initCaesarWheel();
              initXOR();
              setDemoMode('caesar');
-             // No need for updateDemoUI, setDemoMode handles it
+             // Start sim
+             runTerminalSim();
         });
 
     </script>
