@@ -118,6 +118,7 @@
             font-size: 3.5rem;
             font-weight: 800;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 1rem;
@@ -189,17 +190,18 @@
             background: var(--bg-secondary);
             border: 1px solid var(--border);
             border-radius: 10px;
-            padding: 1.25rem;
+            padding: 1.5rem;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem; /* Slightly larger for readability */
+            font-size: 0.95rem;
             overflow-x: auto;
             margin: 0.75rem 0;
             line-height: 1.6;
-            white-space: pre; /* Preserves formatting */
+            white-space: pre;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
         }
 
-        .code-block .comment { color: #6b7280; }
-        .code-block .keyword { color: #c678dd; }
+        .code-block .comment { color: #6b7280; font-style: italic; }
+        .code-block .keyword { color: #c678dd; font-weight: bold; }
         .code-block .function { color: #61afef; }
         .code-block .string { color: #98c379; }
         .code-block .number { color: #d19a66; }
@@ -445,6 +447,21 @@
             justify-content: center;
         }
 
+        /* Marker for Caesar Wheel */
+        .wheel-marker {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid var(--accent-orange);
+            z-index: 10;
+            filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.5));
+        }
+
         .inner-wheel {
             position: absolute;
             width: 70%;
@@ -519,6 +536,16 @@
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
             box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+
+        @keyframes bitPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 rgba(0,212,255,0); }
+            50% { transform: scale(1.2); box-shadow: 0 0 15px rgba(0,212,255,0.5); }
+            100% { transform: scale(1); box-shadow: 0 0 0 rgba(0,212,255,0); }
+        }
+
+        .bit-box.pulsing {
+            animation: bitPulse 0.3s ease-out;
         }
 
         .bit-box.result {
@@ -596,7 +623,302 @@
         .hex-addr { color: var(--text-muted); min-width: 80px; }
         .hex-bytes { color: var(--accent-cyan); }
         .hex-ascii { color: var(--text-secondary); }
+        
+        /* Future Pipeline Diagram */
+        .pipeline-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+        }
 
+        .pipeline-node {
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 160px;
+            cursor: pointer;
+        }
+
+        .pipeline-node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .pipeline-node h4 {
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .pipeline-node .detail {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .pipeline-node:hover .detail {
+            opacity: 1;
+            max-height: 50px; /* Reveal on hover */
+            margin-top: 0.5rem;
+        }
+
+        /* Node Specific Styles */
+        .node-client { border-color: var(--accent-cyan); }
+        .node-network { border-style: dashed; border-color: var(--text-muted); background: transparent; }
+        .node-daemon { border-color: var(--accent-orange); min-width: 200px; }
+        .node-crypto { border-color: var(--accent-purple); }
+        .node-disk { border-color: var(--accent-green); }
+
+        .pipeline-arrow {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            animation: pulse 2s infinite;
+        }
+
+        /* Thread Viz inside Daemon */
+        .thread-pool {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-top: 5px;
+        }
+        .thread-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-orange);
+            animation: pulse 1s infinite alternate;
+        }
+
+
+    </style>
+    <style>
+        /* NEW LAYOUTS */
+        
+        /* Quadrant Grid (Slide 2) */
+        .quadrant-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2rem;
+            position: relative;
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+
+        .quadrant-item {
+            text-align: center;
+            padding: 2rem;
+            border: 1px dashed var(--border);
+            border-radius: 20px;
+            transition: all 0.3s;
+        }
+
+        .quadrant-item:hover {
+            background: rgba(255,255,255,0.02);
+            border-color: var(--accent-cyan);
+            transform: scale(1.02);
+        }
+
+        .quadrant-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .quadrant-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: var(--bg-primary);
+            border: 2px solid var(--accent-cyan);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(20, 184, 166, 0.3);
+            z-index: 10;
+        }
+
+        /* Process Flow (Slide 6) */
+        .process-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4rem;
+        }
+
+        .process-step {
+            text-align: center;
+            position: relative;
+            flex: 1;
+            padding: 1rem;
+        }
+
+        .step-number {
+            font-size: 4rem;
+            font-weight: 900;
+            color: rgba(255,255,255,0.05);
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+        }
+
+        .process-arrow {
+            font-size: 2rem;
+            color: var(--border);
+            opacity: 0.5;
+        }
+
+        /* Big Stats (Slide 7) */
+        .stat-row {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 4rem;
+            text-align: center;
+        }
+
+        .stat-item {
+            flex: 1;
+            padding: 0 1rem;
+        }
+
+        .stat-val {
+            font-size: 5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        /* FEATURE HUB (Slide 3) */
+        .feature-hub {
+            position: relative;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 3rem;
+        }
+
+        .hub-central {
+            width: 480px;
+            height: 300px;
+            background: #000;
+            border: 2px solid var(--accent-cyan);
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(20, 184, 166, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 5;
+            position: relative;
+        }
+
+        .hub-terminal-header {
+            background: #1a1a1a;
+            padding: 8px 15px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .hub-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        .hub-node {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            width: 220px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: default;
+            text-align: center;
+        }
+
+        .hub-node:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(20, 184, 166, 0.1);
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .hub-node h4 { font-size: 0.95rem; margin-bottom: 0.5rem; }
+        .hub-node p { font-size: 0.8rem; line-height: 1.4; }
+
+        /* SYSTEM ANATOMY (Slide 6) */
+        .system-anatomy {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 800px;
+            margin: 2rem auto;
+            perspective: 1000px;
+        }
+
+        .anatomy-layer {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            transform: rotateX(15deg);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .anatomy-layer:hover {
+            transform: rotateX(0deg) translateY(-5px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--accent-purple);
+        }
+
+        .anatomy-icon {
+            font-size: 2.2rem;
+            width: 60px;
+            text-align: center;
+        }
+
+        .anatomy-label {
+            flex: 1;
+        }
+
+        .anatomy-label h4 {
+            color: var(--accent-cyan);
+            margin-bottom: 0.4rem;
+            font-size: 1.1rem;
+        }
+        
+        .anatomy-label p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .anatomy-line {
+            position: absolute;
+            left: 42px;
+            top: 100%;
+            height: 1rem;
+            width: 2px;
+            background: var(--border);
+        }
     </style>
 </head>
 <body>
@@ -630,9 +952,11 @@
                     </div>
                 </div>
 
-                <p style="margin-top: 2.5rem; color: var(--text-muted); font-size: 0.9rem;">
-                    <span style="color: var(--accent-green);">●</span> Team Root
-                </p>
+                <div style="margin-top: 4rem;">
+                    <h2 style="font-size: 4rem; font-weight: 900; letter-spacing: 6px; margin: 2rem 0; color: #fff; text-shadow: 0 0 40px rgba(0, 255, 127, 0.4);">
+                        <span style="color: var(--accent-green);">●</span> TEAM ROOT
+                    </h2>
+                </div>
             </div>
         </div>
 
@@ -642,110 +966,102 @@
                 <h2>Why File Encryption?</h2>
                 <p class="subtitle">Understanding the critical need for data protection in modern computing</p>
                 
-                <div class="card-grid">
-                    <div class="card">
-                        <div class="card-icon">🏢</div>
-                        <h4>Enterprise Security</h4>
-                        <p>Protecting sensitive employee records, financial data, and intellectual property from unauthorized access.</p>
+                <div class="quadrant-grid">
+                    <div class="quadrant-item">
+                        <div class="quadrant-icon" style="color: var(--accent-cyan);">🏢</div>
+                        <h4>Enterprise</h4>
+                        <p>Protecting sensitive employee records & financial data.</p>
                     </div>
-                    <div class="card">
-                        <div class="card-icon">☁️</div>
-                        <h4>Cloud Storage</h4>
-                        <p>Client-side encryption ensures even cloud providers cannot read your data - zero-knowledge security.</p>
+                    <div class="quadrant-item">
+                        <div class="quadrant-icon" style="color: var(--accent-purple);">☁️</div>
+                        <h4>Cloud</h4>
+                        <p>Zero-knowledge security against provider snooping.</p>
                     </div>
-                    <div class="card">
-                        <div class="card-icon">📱</div>
-                        <h4>Device Protection</h4>
-                        <p>Safeguard files on laptops, USB drives, and mobile devices against theft or loss.</p>
+                    <div class="quadrant-item">
+                        <div class="quadrant-icon" style="color: var(--accent-orange);">📱</div>
+                        <h4>Device</h4>
+                        <p>Safeguard files on laptops & drives against theft.</p>
                     </div>
-                    <div class="card">
-                        <div class="card-icon">⚖️</div>
-                        <h4>Compliance</h4>
-                        <p>Meeting regulatory requirements like GDPR, HIPAA, and PCI-DSS for data protection.</p>
+                    <div class="quadrant-item">
+                        <div class="quadrant-icon" style="color: var(--accent-green);">🕵️</div>
+                        <h4>Privacy</h4>
+                        <p>Keeping personal chats & photos safe from prying eyes.</p>
+                    </div>
+                    <!-- Center Overlay -->
+                    <div class="quadrant-center">
+                        <div style="font-size: 2rem;">🔒</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- SLIDE 3: OS Concepts -->
+        <!-- SLIDE 2: What We Built -->
         <div class="slide" data-slide="2">
-            <div class="slide-content">
-                <h2>OS Concepts Demonstrated</h2>
-                <div class="two-col">
-                    <div>
-                        <h3>🔧 System Calls</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 0.75rem;">Direct kernel interaction implementation:</p>
-                        <div class="code-block">
-<span class="comment">// Open file and get file descriptor</span>
-<span class="keyword">int</span> <span class="function">fd</span> = <span class="function">open</span>(<span class="string">"file.txt"</span>, O_RDONLY);
-
-<span class="comment">// Read data from kernel space</span>
-<span class="function">read</span>(fd, buffer, size);
-
-<span class="comment">// Write encrypted data back</span>
-<span class="function">write</span>(out_fd, buffer, size);
-
-<span class="comment">// Release file descriptor</span>
-<span class="function">close</span>(fd);</div>
-                    </div>
-                    <div>
-                        <h3>🔄 User/Kernel Mode</h3>
-                        <div class="arch-diagram">
-                            <div class="arch-box user">
-                                <strong>User Mode</strong><br><small>Your Program</small>
-                            </div>
-                            <span class="arch-arrow">→</span>
-                            <div class="arch-box kernel">
-                                <strong>Kernel Mode</strong><br><small>OS Kernel</small>
-                            </div>
-                            <span class="arch-arrow">→</span>
-                            <div class="arch-box hardware">
-                                <strong>Hardware</strong><br><small>Disk I/O</small>
-                            </div>
-                        </div>
-                         <h3 style="margin-top: 1rem;">💾 Memory Management</h3>
-                        <ul class="feature-list">
-                            <li>Dynamic buffer allocation with malloc()</li>
-                            <li>Proper memory cleanup with free()</li>
-                            <li>Stack vs Heap usage optimization</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SLIDE 4 (Restored): Architecture -->
-        <div class="slide" data-slide="3">
-            <div class="slide-content">
-                <h2>System Architecture</h2>
-                <p class="subtitle">Modular design separating concerns for maintainability</p>
+            <div class="slide-content" style="max-width: 1000px;">
+                <h2>The Architecture of Security</h2>
+                <p class="subtitle">A multi-layered approach to file protection</p>
                 
-                <div class="stack-diagram">
-                    <div class="stack-layer ui">
-                        <h4 style="color: var(--accent-cyan); margin: 0;">🎨 User Interface Layer</h4>
-                        <p style="color: var(--text-secondary); margin: 0.25rem 0 0 0; font-size: 0.85rem;">ncurses interactive menu | CLI argument parser</p>
+                <div class="feature-hub">
+                    <!-- Central Terminal (Authentic Replica) -->
+                    <div class="hub-central">
+                        <div class="hub-terminal-header">
+                            <div class="hub-dot" style="background: #ff5f56;"></div>
+                            <div class="hub-dot" style="background: #ffbd2e;"></div>
+                            <div class="hub-dot" style="background: #27c93f;"></div>
+                        </div>
+                        <div style="padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.5rem; line-height: 1.1; color: var(--accent-cyan); white-space: pre;">
++==================================================================+
+|  _____ _   _  ____ ______   _______ _____ ___  _   _            |
+| | ____| \ | |/ ___|  _ \ \ / /_   _/ ____/ _ \| \ | |           |
+| |  _| |  \| | |   | |_) \ V /  | || |   | | | |  \| |           |
+| | |___| |\  | |___|  _ &lt; | |   | || |___| |_| | |\  |           |
+| |_____|_| \_|\____|_| \_\_|_|   |_| \_____\___/|_| \_|           |
+|                                                                  |
+|            [*] File Encryption & Decryption Tool [*]            |
++==================================================================+
+
+<div style="color: var(--accent-purple); margin-top: 10px;">+------------------------------------------+
+|  MAIN MENU                               |
++------------------------------------------+</div><div style="background: var(--accent-cyan); color: #000; font-weight: bold; width: 100%;">|  > 1. Encrypt File                       |</div><div style="color: var(--text-secondary);">|    2. Decrypt File                       |
+|    3. Key Recovery                       |
+|    4. Settings                           |
++------------------------------------------+</div>
+<div style="color: var(--accent-orange); margin-top: 10px;">   UP/DOWN: Navigate  ENTER: Select  q: Quit</div>
+                        </div>
                     </div>
-                    <div class="stack-arrow">↓</div>
-                    <div class="stack-layer logic">
-                        <h4 style="color: var(--accent-purple); margin: 0;">⚙️ Encryption Engine</h4>
-                        <p style="color: var(--text-secondary); margin: 0.25rem 0 0 0; font-size: 0.85rem;">Caesar Cipher | XOR Cipher | Algorithm selector</p>
+
+                    <!-- Nodes -->
+                    <!-- Top Left -->
+                    <div class="hub-node" style="top: -20px; left: 20px;">
+                        <h4 style="color: var(--accent-cyan);">🎨 Interactive TUI</h4>
+                        <p>User-friendly ncurses menu for intuitive file selection.</p>
                     </div>
-                    <div class="stack-arrow">↓</div>
-                    <div class="stack-layer io">
-                        <h4 style="color: var(--accent-orange); margin: 0;">💾 File I/O Layer</h4>
-                        <p style="color: var(--text-secondary); margin: 0.25rem 0 0 0; font-size: 0.85rem;">POSIX system calls | Buffer management | Error handling</p>
+                    
+                    <!-- Top Right -->
+                    <div class="hub-node" style="top: -20px; right: 20px;">
+                        <h4 style="color: var(--accent-purple);">🔐 Poly-Algorithm</h4>
+                        <p>Support for both Caesar and bitwise XOR encryption.</p>
                     </div>
-                    <div class="stack-arrow">↓</div>
-                    <div class="stack-layer kernel">
-                        <h4 style="color: var(--text-muted); margin: 0;">🐧 Linux Kernel</h4>
-                        <p style="color: var(--text-muted); margin: 0.25rem 0 0 0; font-size: 0.85rem;">VFS | Page Cache | Device Drivers</p>
+
+                    <!-- Bottom Left -->
+                    <div class="hub-node" style="bottom: -20px; left: 20px;">
+                        <h4 style="color: var(--accent-orange);">📁 Universal I/O</h4>
+                        <p>Binary-safe handling for Docs, Images, and PDFs.</p>
+                    </div>
+
+                    <!-- Bottom Right -->
+                    <div class="hub-node" style="bottom: -20px; right: 20px;">
+                        <h4 style="color: var(--accent-green);">⚡ Streamlined CLI</h4>
+                        <p>Fast, scriptable commands for automation workflows.</p>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Slide Moved: Architecture -->
 
         <!-- SLIDE: Live Demo -->
-        <div class="slide" data-slide="4">
+        <div class="slide" data-slide="3">
             <div class="slide-content">
                 <h2>Live Encryption Playground</h2>
                 <p class="subtitle">Type below to see encryption in action</p>
@@ -777,114 +1093,17 @@
             </div>
         </div>
 
-        <!-- SLIDE 5: Algorithms (with fixed code) -->
-        <div class="slide" data-slide="5">
-            <div class="slide-content">
-                <h2>Encryption Algorithms</h2>
-                <div class="two-col">
-                    <div>
-                        <h3>🔐 Caesar Cipher</h3>
-                        <span class="badge badge-warn">Educational</span>
-                        <div class="code-block">
-<span class="keyword">void</span> <span class="function">caesar_encrypt</span>(<span class="keyword">unsigned char</span> *data, <span class="keyword">int</span> key) {
-    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i < len; i++) {
-        data[i] = (data[i] + key) % <span class="number">256</span>;
-    }
-}</div>
-                    </div>
-                    <div>
-                        <h3>🔑 XOR Cipher</h3>
-                        <span class="badge badge-info">Bitwise</span>
-                        <div class="code-block">
-<span class="keyword">void</span> <span class="function">xor_cipher</span>(<span class="keyword">unsigned char</span> *data, <span class="keyword">char</span> *key) {
-    <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i < len; i++) {
-        data[i] ^= key[i % key_len];
-    }
-}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SLIDE 6 (Restored): Hex Dump -->
-        <div class="slide" data-slide="6">
-            <div class="slide-content">
-                <h2>Binary-Level Transformation</h2>
-                <p class="subtitle">How encryption modifies file contents at the byte level</p>
-                
-                <div class="two-col">
-                    <div>
-                        <h3>📄 Original File</h3>
-                        <div class="hex-dump">
-                            <div class="hex-row">
-                                <span class="hex-addr">00000000</span>
-                                <span class="hex-bytes">48 65 6c 6c 6f 20 57 6f 72 6c 64</span>
-                                <span class="hex-ascii">Hello World</span>
-                            </div>
-                            <div class="hex-row">
-                                <span class="hex-addr">00000010</span>
-                                <span class="hex-bytes">21 0a 54 68 69 73 20 69 73 20 61</span>
-                                <span class="hex-ascii">!..This is a</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3>🔒 Encrypted File (Caesar +5)</h3>
-                        <div class="hex-dump">
-                            <div class="hex-row">
-                                <span class="hex-addr">00000000</span>
-                                <span class="hex-bytes" style="color: var(--accent-green);">4d 6a 71 71 74 25 5c 74 77 71 69</span>
-                                <span class="hex-ascii" style="color: var(--accent-orange);">Mjqqt\twqi</span>
-                            </div>
-                            <div class="hex-row">
-                                <span class="hex-addr">00000010</span>
-                                <span class="hex-bytes" style="color: var(--accent-green);">26 0f 59 6d 6e 78 25 6e 78 25 66</span>
-                                <span class="hex-ascii" style="color: var(--accent-orange);">&..Ymnx%nx%f</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SLIDE 7: Authentic CLI & Menu -->
-        <div class="slide" data-slide="7">
-            <div class="slide-content">
-                <h2>Project Authenticity</h2>
-                <p class="subtitle">Exact replication of the project's ncurses interface and CLI ASCII art.</p>
-                <div class="exact-terminal">
-<span class="term-banner-border">+==================================================================+</span>
-<span class="term-banner-border">|</span>  _____ _   _  ____ ______   _______ _____ ___  _   _            <span class="term-banner-border">|</span>
-<span class="term-banner-border">|</span> | ____| \ | |/ ___|  _ \ \ / /_   _/ ____/ _ \| \ | |           <span class="term-banner-border">|</span>
-<span class="term-banner-border">|</span> |  _| |  \| | |   | |_) \ V /  | || |   | | | |  \| |           <span class="term-banner-border">|</span>
-<span class="term-banner-border">|</span> | |___| |\  | |___|  _ < | |   | || |___| |_| | |\  |           <span class="term-banner-border">|</span>
-<span class="term-banner-border">|</span> |_____|_| \_|\____|_| \_\|_|   |_| \_____\___/|_| \_|           <span class="term-banner-border">|</span>
-<span class="term-banner-border">|</span>                                                                 <span class="term-banner-border">|</span>
-<span class="term-banner-border">|</span>            <span class="term-banner-text">[*] File Encryption & Decryption Tool [*]</span>            <span class="term-banner-border">|</span>
-<span class="term-banner-border">|</span>                      <span class="term-banner-text">OS Course Project</span>                          <span class="term-banner-border">|</span>
-<span class="term-banner-border">+==================================================================+</span>
-
-  <span class="term-menu-border">+------------------------------------------+</span>
-  <span class="term-menu-border">|</span>  <span class="term-menu-title">Main Menu</span>                               <span class="term-menu-border">|</span>
-  <span class="term-menu-border">+------------------------------------------+</span>
-  <span class="term-menu-border">|</span>  > [1] Encrypt a File                    <span class="term-menu-border">|</span>
-  <span class="term-menu-border">|</span>    [2] Decrypt a File                    <span class="term-menu-border">|</span>
-  <span class="term-menu-border">|</span>    [3] Exit                              <span class="term-menu-border">|</span>
-  <span class="term-menu-border">+------------------------------------------+</span>
-
-   <span class="term-manage">UP/DOWN: Navigate  ENTER: Select  q: Quit</span>
-</div>
-            </div>
-        </div>
+        <!-- SLIDE REMOVED: Algorithm, Hex, Architecture -->
 
         <!-- SLIDE 8: Interactive Caesar Wheel -->
-        <div class="slide" data-slide="8">
+        <div class="slide" data-slide="4">
             <div class="slide-content">
                 <h2>Caesar Cipher Visualization</h2>
                 <p class="subtitle">Interactive wheel demonstrating the modular shift character mapping.</p>
                 
                 <div class="caesar-container">
                     <div class="wheel-wrapper" id="caesarWrapper">
+                        <div class="wheel-marker"></div>
                         <!-- Rings injected via JS -->
                     </div>
                 
@@ -899,7 +1118,7 @@
         </div>
 
         <!-- SLIDE 9: Interactive XOR Demo -->
-        <div class="slide" data-slide="9">
+        <div class="slide" data-slide="5">
             <div class="slide-content">
                 <h2>Live XOR Cipher Demo</h2>
                 <p class="subtitle">Interactive bitwise operation. Click the bits to toggle them.</p>
@@ -924,94 +1143,167 @@
                 </div>
             </div>
         </div>
-        
-        </div>
 
-        <!-- SLIDE 11: Key Features (Revamped) -->
-        <div class="slide" data-slide="10">
-            <div class="slide-content">
-                <h2>Key Features</h2>
-                <p class="subtitle">Core capabilities of the system</p>
-                 <div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-                    <div class="card" style="text-align: center;">
-                        <div class="card-icon" style="color: var(--accent-cyan);">0101</div>
-                        <h4>Binary Support</h4>
-                        <p>Handles any file type (images, PDFs) using `O_BINARY`.</p>
+        <!-- NEW SLIDE: OS Concepts Simplified (Refined) -->
+        <div class="slide" data-slide="6">
+            <div class="slide-content" style="max-width: 1000px;">
+                <h2>Anatomy of a System Operation</h2>
+                <p class="subtitle">The Journey from User Input to Disk Persistence</p>
+                
+                <div class="system-anatomy">
+                    <!-- Layer 1 -->
+                    <div class="anatomy-layer">
+                        <div class="anatomy-icon">🚪</div>
+                        <div class="anatomy-label">
+                            <h4>Layer 1: The Gateway (System Calls)</h4>
+                            <p>Crossing the User/Kernel boundary using <code>read()</code> and <code>write()</code>. The OS takes control to perform privileged hardware operations.</p>
+                        </div>
+                        <div class="anatomy-line"></div>
                     </div>
-                    <div class="card" style="text-align: center;">
-                        <div class="card-icon" style="color: var(--accent-purple);">🖥️</div>
-                        <h4>Interactive UI</h4>
-                        <p>Rich ncurses menu system for ease of use.</p>
+
+                    <!-- Layer 2 -->
+                    <div class="anatomy-layer">
+                        <div class="anatomy-icon">📇</div>
+                        <div class="anatomy-label">
+                            <h4>Layer 2: The Tracker (File Descriptors)</h4>
+                            <p>Managing resource handles. Every file is an entry in the Process Open File Table, abstracted as a simple integer <code>(fd)</code>.</p>
+                        </div>
+                        <div class="anatomy-line"></div>
                     </div>
-                    <div class="card" style="text-align: center;">
-                        <div class="card-icon" style="color: var(--accent-orange);">⚡</div>
-                        <h4>CLI Mode</h4>
-                        <p>Scriptable command-line arguments for automation.</p>
-                    </div>
-                    <div class="card" style="text-align: center;">
-                        <div class="card-icon" style="color: var(--accent-green);">🛡️</div>
-                        <h4>Memory Safe</h4>
-                        <p>Valgrind-verified memory management.</p>
-                    </div>
-                    <div class="card" style="text-align: center;">
-                        <div class="card-icon" style="color: var(--accent-red);">🐧</div>
-                        <h4>POSIX API</h4>
-                        <p>Direct system calls for max performance.</p>
+
+                    <!-- Layer 3 -->
+                    <div class="anatomy-layer">
+                        <div class="anatomy-icon">🌊</div>
+                        <div class="anatomy-label">
+                            <h4>Layer 3: The Flow (Buffer Management)</h4>
+                            <p>Synchronizing disk speed with CPU logic. Data flows through 4096-byte memory pools to balance performance and reliability.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- SLIDE 12 (Restored): Challenges -->
-        <div class="slide" data-slide="11">
+        <!-- NEW SLIDE: Engineering Highlights (Renamed from Journey) -->
+        <div class="slide" data-slide="7">
             <div class="slide-content">
-                <h2>Challenges & Learnings</h2>
-                <div class="card-grid">
-                    <div class="card">
-                        <div class="card-icon">🐛</div>
-                        <h4>Binary Mode is Critical</h4>
-                        <p>Opening files in text mode caused corruption. Using O_BINARY flag preserves exact byte values.</p>
+                <h2>Engineering Highlights</h2>
+                <p class="subtitle">Key Design Decisions & Optimizations</p>
+                
+                <div class="stat-row">
+                    <!-- Stat 1 -->
+                    <div class="stat-item">
+                         <div class="stat-val" style="color: var(--accent-green);">100%</div>
+                         <div class="stat-label">Data Integrity</div>
+                         <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Binary-Safe I/O ensures images & PDFs never get corrupted.</p>
                     </div>
-                    <div class="card">
-                        <div class="card-icon">💡</div>
-                        <h4>Buffer Size Matters</h4>
-                        <p>Small buffers (1KB) caused slow I/O. Increasing to 8KB-64KB improved performance significantly.</p>
+
+                    <!-- Stat 2 -->
+                    <div class="stat-item">
+                        <div class="stat-val" style="color: var(--accent-cyan);">100x</div>
+                        <div class="stat-label">Faster I/O</div>
+                         <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">4KB Buffer implementation reduced syscalls overhead drastically.</p>
                     </div>
-                    <div class="card">
-                        <div class="card-icon">🔐</div>
-                        <h4>XOR is Self-Inverse</h4>
-                        <p>Discovered that XOR cipher uses the SAME function for encryption and decryption!</p>
+
+                    <!-- Stat 3 -->
+                    <div class="stat-item">
+                        <div class="stat-val" style="color: var(--accent-purple);">2-in-1</div>
+                        <div class="stat-label">Hybrid Interface</div>
+                         <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Seamlessly switch between Interactive TUI and Scriptable CLI.</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- SLIDE 13: What's Next -->
-        <div class="slide" data-slide="12">
+        <!-- SLIDE 8: What's Next -->
+        <div class="slide" data-slide="8">
              <div class="slide-content">
                 <h2>What's Next: Phase 2</h2>
-                <div class="card-grid">
-                    <div class="card">
-                        <div class="card-icon">⚙️</div>
-                        <h4>Multi-Process Engine</h4>
-                        <p>Using <code>fork()</code> for parallel processing.</p>
+                <p class="subtitle">Architecting a High-Performance Secure File Service</p>
+                
+                <div class="pipeline-container">
+                    <!-- NODE 1 -->
+                    <div class="pipeline-node node-client">
+                        <h4><span style="color: var(--accent-cyan);">🌐</span> Clients</h4>
+                        <div class="detail">Remote Access</div>
                     </div>
-                    <div class="card">
-                        <div class="card-icon">📧</div>
-                        <h4>IPC & Pipes</h4>
-                        <p>Secure inter-process key exchange.</p>
+
+                    <div class="pipeline-arrow">→</div>
+
+                    <!-- NODE 2 -->
+                    <div class="pipeline-node node-network">
+                        <h4>TCP / IP</h4>
+                        <div class="detail">Secure Sockets</div>
                     </div>
-                    <div class="card">
-                        <div class="card-icon">📁</div>
-                        <h4>Recursive Directory Encryption</h4>
-                        <p>Encrypting entire folder structures.</p>
+
+                    <div class="pipeline-arrow">→</div>
+
+                    <!-- NODE 3 -->
+                    <div class="pipeline-node node-daemon">
+                        <h4><span style="color: var(--accent-orange);">👻</span> Daemon Service</h4>
+                        <div class="thread-pool">
+                            <div class="thread-dot" style="animation-delay: 0s"></div>
+                            <div class="thread-dot" style="animation-delay: 0.2s"></div>
+                            <div class="thread-dot" style="animation-delay: 0.4s"></div>
+                        </div>
+                        <div class="detail">Multi-threaded Worker Pool</div>
                     </div>
+
+                    <div class="pipeline-arrow">→</div>
+
+                    <!-- NODE 4 -->
+                    <div class="pipeline-node node-crypto">
+                        <h4><span style="color: var(--accent-purple);">⚡</span> AES-NI</h4>
+                        <div class="detail">Hardware Acceleration</div>
+                    </div>
+
+                    <div class="pipeline-arrow">→</div>
+
+                     <!-- NODE 5 -->
+                     <div class="pipeline-node node-disk">
+                        <h4><span style="color: var(--accent-green);">💾</span> Storage</h4>
+                        <div class="detail">Persistent & Encrypted</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 3rem; text-align: center;">
+                    <h3 style="color: var(--text-primary); margin-bottom: 2rem; font-size: 1.5rem;">The Vision: An "Encrypted Vault"</h3>
+                    
+                    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                         <!-- Step 1 -->
+                        <div class="card" style="border-style: dashed; border-color: var(--accent-cyan);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📤</div>
+                            <h4 style="color: var(--accent-cyan);">1. The Drop</h4>
+                            <p>User A uploads a file. It is immediately encrypted by the daemon before hitting the disk.</p>
+                        </div>
+                        
+                        <!-- Step 2 -->
+                        <div class="card" style="background: rgba(245, 158, 11, 0.1); border-color: var(--accent-orange);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🏦</div>
+                            <h4 style="color: var(--accent-orange);">2. The Vault</h4>
+                            <p>The system stores the locked file. It has <strong>zero knowledge</strong> of the contents.</p>
+                        </div>
+
+                        <!-- Step 3 -->
+                        <div class="card" style="border-style: dashed; border-color: var(--accent-green);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🔐</div>
+                            <h4 style="color: var(--accent-green);">3. The Access</h4>
+                            <p>User B downloads the blob, but can only open it if they possess the correct key.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 3rem;">
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">
+                        <span style="color: var(--accent-orange);">*</span> Moving from a local CLI tool to a scalable enterprise-grade system service.
+                    </p>
                 </div>
              </div>
         </div>
 
          <!-- SLIDE 14: END -->
-         <div class="slide" data-slide="13">
+         <!-- SLIDE 9: END -->
+         <div class="slide" data-slide="9">
             <div class="slide-content" style="text-align: center;">
                 <h1>Thank You</h1>
                 <p class="subtitle">Questions & Discussion</p>
@@ -1057,7 +1349,8 @@
             slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
             
             // Re-init visuals if needed
-            if(currentSlide === 8) setTimeout(initCaesarWheel, 100); // Caesar is now Slide 8 (+1 shift due to new slide)
+            // Re-init visuals if needed
+            if(currentSlide === 4) setTimeout(initCaesarWheel, 100); // Caesar is now Slide 4
         }
 
         function changeSlide(dir) {
@@ -1080,7 +1373,7 @@
         let caesarShift = 0;
         function initCaesarWheel() {
             const wrapper = document.getElementById('caesarWrapper');
-            if(wrapper.children.length > 0) return; // Already init
+            if(wrapper.querySelector('.outer-ring')) return; // Already init
 
             // Create Outer Ring (Static)
             const outer = document.createElement('div');
@@ -1143,7 +1436,11 @@
                 const bIn = document.createElement('div');
                 bIn.className = `bit-box ${xorInputState[i] ? 'one' : ''}`;
                 bIn.textContent = xorInputState[i];
-                bIn.onclick = () => toggleXorBit(i);
+                bIn.onclick = () => {
+                    toggleXorBit(i);
+                    bIn.classList.add('pulsing');
+                    setTimeout(() => bIn.classList.remove('pulsing'), 300);
+                };
                 inputRow.appendChild(bIn);
 
                 // Key bits (Static)
