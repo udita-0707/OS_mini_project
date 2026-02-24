@@ -4,7 +4,6 @@ const CHANNELS = [
     { id: "secret", name: "secret", description: "Extra encrypted secret room" },
     { id: "dev", name: "dev", description: "Tech and code discussion" },
     { id: "random", name: "random", description: "Anything goes" },
-    { id: "file-crypto", name: "file-crypto", description: "Encrypt/decrypt files locally" },
 ];
 
 export default CHANNELS;

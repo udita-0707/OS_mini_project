@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
-import { pushData, setData, deleteData, onData, dbInitError } from './db.js';
+import { setData, deleteData, onData, dbInitError } from './db.js';
 import CHANNELS from './channels.js';
 import Sidebar from './Sidebar.js';
 import Chat from './Chat.js';
 
-const DEFAULT_JOINED_CHANNELS = new Set(['general', 'secret', 'dev', 'random', 'file-crypto']);
-const PROTECTED_CHANNEL_ID = 'file-crypto';
+const DEFAULT_JOINED_CHANNELS = new Set(['general', 'secret', 'dev', 'random']);
+const PROTECTED_CHANNEL_ID = 'general';
+const PRESENCE_TTL_MS = 45_000;
+const PRESENCE_HEARTBEAT_MS = 15_000;
+
 const MODALS = {
     NONE: 'none',
     CREATE: 'create',
@@ -36,8 +39,51 @@ const generateChannelFingerprint = async (channelId) => {
     return formatFingerprint(bytesToHex(new Uint8Array(digest)));
 };
 
+const normalizeMemberKey = (username, sessionId) => {
+    const cleanName = (username || 'user').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'user';
+    return `${cleanName}-${sessionId}`;
+};
+
+const getChannelRole = (channel, username) => {
+    if (!channel || !username) return 'member';
+    if (channel.owner && channel.owner === username) return 'owner';
+    if (Array.isArray(channel.admins) && channel.admins.includes(username)) return 'admin';
+    if (channel.owner === 'system') return 'admin';
+
+    // Backward compatibility for legacy channels created before role metadata.
+    if (!channel.owner && (!Array.isArray(channel.admins) || channel.admins.length === 0)) {
+        return 'admin';
+    }
+
+    return 'member';
+};
+
+const normalizeChannelPayload = async (channel, usernameForOwner = 'system') => {
+    const isPrivate = Boolean(channel.isPrivate);
+    const fingerprint = isPrivate
+        ? null
+        : (channel.fingerprint || await generateChannelFingerprint(channel.id));
+
+    return {
+        ...channel,
+        fingerprint,
+        owner: channel.owner || usernameForOwner,
+        admins: Array.isArray(channel.admins)
+            ? channel.admins
+            : (channel.owner ? [channel.owner] : []),
+        updatedAt: Date.now()
+    };
+};
+
 const App = () => {
     const [username, setUsername] = useState(() => localStorage.getItem('username') || '');
+    const [sessionMemberId] = useState(() => {
+        const existing = sessionStorage.getItem('memberSessionId');
+        if (existing) return existing;
+        const created = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+        sessionStorage.setItem('memberSessionId', created);
+        return created;
+    });
     const [encryptionPassphrase, setEncryptionPassphrase] = useState(
         () => sessionStorage.getItem('encryptionPassphrase') || ''
     );
@@ -48,6 +94,7 @@ const App = () => {
     const [unlockedChannels, setUnlockedChannels] = useState(new Set());
     const [activeChannel, setActiveChannel] = useState(null);
     const [currentMemberKey, setCurrentMemberKey] = useState(null);
+    const [currentMemberJoinedAt, setCurrentMemberJoinedAt] = useState(null);
     const [activeModal, setActiveModal] = useState(MODALS.NONE);
     const [pendingPrivateChannel, setPendingPrivateChannel] = useState(null);
     const [modalSource, setModalSource] = useState('sidebar');
@@ -62,12 +109,7 @@ const App = () => {
         const unsubscribe = onData('channels', async (data) => {
             if (!data || Object.keys(data).length === 0) {
                 const seededChannels = await Promise.all(
-                    CHANNELS.map(async (channel) => ({
-                        ...channel,
-                        fingerprint: channel.isPrivate
-                            ? null
-                            : await generateChannelFingerprint(channel.id)
-                    }))
+                    CHANNELS.map(async (channel) => normalizeChannelPayload(channel, 'system'))
                 );
                 await Promise.all(
                     seededChannels.map((channel) => setData(`channels/${channel.id}`, channel))
@@ -75,28 +117,22 @@ const App = () => {
                 return;
             }
 
-            const missingDefaultChannels = CHANNELS.filter((channel) => !data[channel.id]);
-            if (missingDefaultChannels.length) {
-                await Promise.all(
-                    missingDefaultChannels.map((channel) =>
-                        setData(`channels/${channel.id}`, channel)
-                    )
-                );
+            if (data['file-crypto']) {
+                await Promise.all([
+                    deleteData('channels/file-crypto'),
+                    deleteData('messages/file-crypto'),
+                    deleteData('members/file-crypto')
+                ]);
                 return;
             }
 
-            const missingFingerprints = Object.entries(data).filter(([key, value]) =>
-                value && !value.isPrivate && !value.fingerprint && key
-            );
-            if (missingFingerprints.length) {
+            const missingDefaultChannels = CHANNELS.filter((channel) => !data[channel.id]);
+            if (missingDefaultChannels.length) {
                 await Promise.all(
-                    missingFingerprints.map(async ([key, value]) =>
-                        setData(`channels/${key}`, {
-                            ...value,
-                            id: key,
-                            fingerprint: await generateChannelFingerprint(key)
-                        })
-                    )
+                    missingDefaultChannels.map(async (channel) => {
+                        const normalized = await normalizeChannelPayload(channel, 'system');
+                        return setData(`channels/${channel.id}`, normalized);
+                    })
                 );
                 return;
             }
@@ -115,6 +151,24 @@ const App = () => {
                 return;
             }
 
+            const missingMetadata = Object.entries(data).filter(([, value]) => {
+                if (!value) return false;
+                const needsFingerprint = !value.isPrivate && !value.fingerprint;
+                const needsOwner = !value.owner;
+                const needsAdmins = !Array.isArray(value.admins);
+                return needsFingerprint || needsOwner || needsAdmins;
+            });
+
+            if (missingMetadata.length) {
+                await Promise.all(
+                    missingMetadata.map(async ([key, value]) => {
+                        const normalized = await normalizeChannelPayload({ ...value, id: key }, value.owner || 'system');
+                        return setData(`channels/${key}`, normalized);
+                    })
+                );
+                return;
+            }
+
             const channelList = Object.entries(data).map(([key, value]) => ({
                 ...value,
                 id: key
@@ -128,6 +182,26 @@ const App = () => {
         };
     }, []);
 
+    const activeChannelData = useMemo(
+        () => channels.find((channel) => channel.id === activeChannel) || null,
+        [channels, activeChannel]
+    );
+
+    const activeChannelRole = useMemo(
+        () => getChannelRole(activeChannelData, username),
+        [activeChannelData, username]
+    );
+
+    const canModerateChannel = useMemo(
+        () => activeChannelRole === 'owner' || activeChannelRole === 'admin',
+        [activeChannelRole]
+    );
+
+    const canDeleteChannel = useMemo(
+        () => Boolean(activeChannelData && activeChannelData.id !== PROTECTED_CHANNEL_ID && activeChannelRole === 'owner'),
+        [activeChannelData, activeChannelRole]
+    );
+
     useEffect(() => {
         if (!activeChannel) {
             setActiveMembers([]);
@@ -140,15 +214,35 @@ const App = () => {
                 return;
             }
 
-            const unique = new Set();
-            const membersList = Object.keys(data)
-                .map((key) => ({ ...data[key], id: key }))
-                .filter((m) => {
-                    if (!m?.username) return false;
-                    if (unique.has(m.username)) return false;
-                    unique.add(m.username);
-                    return true;
-                });
+            const now = Date.now();
+            const staleKeys = [];
+            const latestByUser = new Map();
+
+            Object.entries(data).forEach(([key, value]) => {
+                if (!value?.username) return;
+                const lastSeen = value.lastSeen || value.joinedAt || 0;
+                if (!lastSeen || (now - lastSeen) > PRESENCE_TTL_MS) {
+                    staleKeys.push(key);
+                    return;
+                }
+
+                const previous = latestByUser.get(value.username);
+                if (!previous || (previous.lastSeen || 0) < lastSeen) {
+                    latestByUser.set(value.username, {
+                        ...value,
+                        id: key,
+                        lastSeen
+                    });
+                }
+            });
+
+            if (staleKeys.length) {
+                Promise.all(staleKeys.map((key) => deleteData(`members/${activeChannel}/${key}`))).catch(() => {});
+            }
+
+            const membersList = Array.from(latestByUser.values())
+                .sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+
             setActiveMembers(membersList);
         });
 
@@ -169,7 +263,31 @@ const App = () => {
         };
     }, [currentMemberKey, activeChannel]);
 
-    const joinChannelInternal = async (channelId) => {
+    useEffect(() => {
+        if (!activeChannel || !currentMemberKey || !username) return undefined;
+
+        const heartbeat = () => {
+            const role = getChannelRole(
+                channels.find((channel) => channel.id === activeChannel),
+                username
+            );
+            setData(`members/${activeChannel}/${currentMemberKey}`, {
+                channelId: activeChannel,
+                username,
+                role,
+                joinedAt: currentMemberJoinedAt || Date.now(),
+                lastSeen: Date.now()
+            }).catch(() => {});
+        };
+
+        heartbeat();
+        const interval = setInterval(heartbeat, PRESENCE_HEARTBEAT_MS);
+        return () => clearInterval(interval);
+    }, [activeChannel, currentMemberKey, username, channels, currentMemberJoinedAt]);
+
+    const joinChannelInternal = async (channel, source = 'sidebar') => {
+        if (!channel?.id) return;
+        const channelId = channel.id;
         setJoinedChannelIds((prev) => new Set(prev).add(channelId));
 
         if (currentMemberKey && activeChannel) {
@@ -180,13 +298,20 @@ const App = () => {
             }
         }
 
+        const memberKey = normalizeMemberKey(username, sessionMemberId);
+        const joinedAt = Date.now();
+
         try {
-            const newMemberRef = await pushData(`members/${channelId}`, {
+            await setData(`members/${channelId}/${memberKey}`, {
                 channelId,
                 username,
-                joinedAt: Date.now()
+                role: getChannelRole(channel, username),
+                joinedAt,
+                lastSeen: joinedAt,
+                source
             });
-            setCurrentMemberKey(newMemberRef.key);
+            setCurrentMemberKey(memberKey);
+            setCurrentMemberJoinedAt(joinedAt);
         } catch (err) {
             console.warn('Member join error:', err.message);
         }
@@ -208,7 +333,7 @@ const App = () => {
             return;
         }
 
-        joinChannelInternal(channel.id);
+        joinChannelInternal(channel, source);
         setActiveModal(MODALS.NONE);
     };
 
@@ -230,7 +355,7 @@ const App = () => {
         const entered = e.target.elements.password.value;
         if (pendingPrivateChannel && entered === pendingPrivateChannel.password) {
             setUnlockedChannels((prev) => new Set(prev).add(pendingPrivateChannel.id));
-            joinChannelInternal(pendingPrivateChannel.id);
+            joinChannelInternal(pendingPrivateChannel, modalSource);
             setPendingPrivateChannel(null);
             setPasswordError('');
             setActiveModal(MODALS.NONE);
@@ -264,7 +389,11 @@ const App = () => {
                 description,
                 isPrivate: createChannelPrivate,
                 password: createChannelPrivate ? password : null,
-                fingerprint
+                fingerprint,
+                owner: username,
+                admins: [username],
+                createdAt: Date.now(),
+                updatedAt: Date.now()
             });
             setActiveModal(MODALS.NONE);
             setCreateError('');
@@ -293,8 +422,6 @@ const App = () => {
         }
     };
 
-    const activeChannelData = channels.find((channel) => channel.id === activeChannel) || null;
-
     const openAboutChannel = () => {
         if (!activeChannelData) return;
         setSelectedChannel(activeChannelData);
@@ -303,15 +430,27 @@ const App = () => {
     };
 
     const requestDeleteChannel = (channel = activeChannelData) => {
-        if (!channel || channel.id === PROTECTED_CHANNEL_ID) return;
+        if (!channel) return;
+        const role = getChannelRole(channel, username);
+        const allowed = channel.id !== PROTECTED_CHANNEL_ID && role === 'owner';
+        if (!allowed) {
+            setDeleteError('Only channel owners can delete channels.');
+            return;
+        }
         setSelectedChannel(channel);
         setDeleteError('');
         setActiveModal(MODALS.DELETE);
     };
 
     const handleDeleteChannel = async () => {
-        if (!selectedChannel || selectedChannel.id === PROTECTED_CHANNEL_ID) {
+        if (!selectedChannel) {
             setActiveModal(MODALS.NONE);
+            return;
+        }
+
+        const role = getChannelRole(selectedChannel, username);
+        if (selectedChannel.id === PROTECTED_CHANNEL_ID || role !== 'owner') {
+            setDeleteError('Only owners can delete non-protected channels.');
             return;
         }
 
@@ -336,7 +475,10 @@ const App = () => {
             });
 
             if (activeChannel === deletingId) {
-                await joinChannelInternal(PROTECTED_CHANNEL_ID);
+                const fallback = channels.find((channel) => channel.id === PROTECTED_CHANNEL_ID);
+                if (fallback) {
+                    await joinChannelInternal(fallback, 'fallback');
+                }
             }
 
             setSelectedChannel(null);
@@ -390,7 +532,9 @@ const App = () => {
                 encryptionPassphrase={encryptionPassphrase}
                 onAboutChannel={openAboutChannel}
                 onRequestDeleteChannel={() => requestDeleteChannel(activeChannelData)}
-                canDeleteChannel={Boolean(activeChannelData && activeChannelData.id !== PROTECTED_CHANNEL_ID)}
+                canDeleteChannel={canDeleteChannel}
+                canModerateChannel={canModerateChannel}
+                channelRole={activeChannelRole}
             />
 
             {showPrompt && (
@@ -603,7 +747,13 @@ const App = () => {
                             Type: <strong>{selectedChannel.isPrivate ? 'Private' : 'Public'}</strong>
                         </p>
                         <p>
-                            Status: <strong>{selectedChannel.id === PROTECTED_CHANNEL_ID ? 'Pinned / Protected' : 'Standard'}</strong>
+                            Status: <strong>{selectedChannel.id === PROTECTED_CHANNEL_ID ? 'Default / Protected' : 'Standard'}</strong>
+                        </p>
+                        <p>
+                            Owner: <strong>{selectedChannel.owner || 'system'}</strong>
+                        </p>
+                        <p>
+                            Your role: <strong>{getChannelRole(selectedChannel, username)}</strong>
                         </p>
                         {!selectedChannel.isPrivate && selectedChannel.fingerprint && (
                             <p>
@@ -611,18 +761,20 @@ const App = () => {
                                 <strong> {selectedChannel.fingerprint}</strong>
                             </p>
                         )}
+                        {deleteError && <p className="modal-error">{deleteError}</p>}
                         <div className="modal-actions">
                             <button
                                 type="button"
                                 className="modal-btn modal-btn-secondary"
                                 onClick={() => {
                                     setSelectedChannel(null);
+                                    setDeleteError('');
                                     setActiveModal(MODALS.NONE);
                                 }}
                             >
                                 Close
                             </button>
-                            {selectedChannel.id !== PROTECTED_CHANNEL_ID ? (
+                            {selectedChannel.id !== PROTECTED_CHANNEL_ID && getChannelRole(selectedChannel, username) === 'owner' ? (
                                 <button
                                     type="button"
                                     className="modal-btn modal-btn-danger"
@@ -632,7 +784,7 @@ const App = () => {
                                 </button>
                             ) : (
                                 <button type="button" className="modal-btn modal-btn-secondary" disabled>
-                                    Protected Channel
+                                    Owner Only
                                 </button>
                             )}
                         </div>

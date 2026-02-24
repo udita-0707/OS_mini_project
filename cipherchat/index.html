@@ -544,7 +544,7 @@
       min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 12px 16px 122px;
+      padding: 12px 16px 16px;
       scroll-behavior: smooth;
     }
     .chat-content-layout {
@@ -554,8 +554,10 @@
       min-height: 0;
     }
     .chat-main-column {
-      position: relative;
+      display: flex;
+      flex-direction: column;
       min-height: 0;
+      height: 100%;
       border-right: 1px solid var(--line-soft);
     }
     .channel-members-pane {
@@ -614,15 +616,14 @@
       display: grid;
       grid-template-columns: 42px minmax(0, 1fr);
       gap: 10px;
-      padding: 11px 9px;
-      border-radius: 11px;
-      border: 1px solid transparent;
-      transition: border-color 160ms ease, background 160ms ease;
+      padding: 8px 2px;
+      border: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      transition: none;
       animation: fadeLift 260ms ease both;
     }
     .msg-group:hover {
-      background: rgba(255, 255, 255, 0.025);
-      border-color: var(--line-soft);
+      background: transparent;
     }
     .msg-avatar {
       width: 40px;
@@ -636,12 +637,51 @@
       font-weight: 800;
       box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.25);
     }
-    .msg-content { min-width: 0; }
+    .msg-content {
+      min-width: 0;
+      position: relative;
+    }
+    .msg-kebab-btn {
+      position: absolute;
+      top: 2px;
+      right: 0;
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(12, 20, 33, 0.86);
+      color: var(--text-main);
+      font-size: 14px;
+      line-height: 1;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 140ms ease;
+    }
+    .msg-group:hover .msg-kebab-btn,
+    .msg-kebab-btn:focus-visible {
+      opacity: 0.85;
+      pointer-events: auto;
+    }
+    .msg-group.menu-open .msg-kebab-btn {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .messages-list.menu-active .msg-kebab-btn {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .msg-kebab-btn:hover {
+      opacity: 1;
+      border-color: rgba(240, 203, 130, 0.7);
+      color: var(--text-strong);
+    }
     .msg-header {
       display: flex;
       align-items: baseline;
       flex-wrap: wrap;
       gap: 6px;
+      padding-right: 34px;
     }
     .msg-cipher-tag {
       border: 1px solid var(--line-soft);
@@ -693,7 +733,6 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
-    .msg-text-error { color: #ffadb1; }
     .msg-encrypted-pill {
       margin-top: 6px;
       display: inline-flex;
@@ -719,25 +758,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .msg-encrypted-toggle {
-      margin-top: 6px;
-      border: 1px solid var(--line-soft);
-      border-radius: 8px;
-      background: rgba(11, 19, 31, 0.58);
-      color: var(--text-main);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      padding: 5px 8px;
-      cursor: pointer;
-      transition: all 150ms ease;
-    }
-    .msg-encrypted-toggle:hover {
-      border-color: rgba(240, 203, 130, 0.55);
-      color: var(--text-strong);
-    }
-
+    .msg-text-error { color: #ffadb1; }
     .jump-latest-btn {
       position: absolute;
       right: 20px;
@@ -763,10 +784,10 @@
     }
 
     .chat-input-bar {
-      position: absolute;
-      left: 0;
-      right: 0;
+      position: sticky;
       bottom: 0;
+      z-index: 9;
+      margin-top: auto;
       padding: 12px 16px 14px;
       background: linear-gradient(180deg, rgba(10, 17, 29, 0) 0%, rgba(8, 14, 24, 0.95) 34%);
     }
@@ -1048,278 +1069,238 @@
       gap: 4px;
     }
 
-    .file-crypto-panel {
-      margin: 10px 14px 0;
-      padding: 13px;
+    .role-chip {
       border: 1px solid var(--line-soft);
-      border-radius: 12px;
-      background: linear-gradient(180deg, rgba(17, 31, 49, 0.86), rgba(11, 20, 33, 0.88));
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: inset 0 0 0 1px rgba(240, 203, 130, 0.05);
-    }
-    .file-channel-stage {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      padding: 10px 6px 20px;
-    }
-    .file-channel-brief {
-      margin: 0 8px 10px;
-      border: 1px solid rgba(123, 200, 180, 0.32);
-      border-radius: 12px;
-      background: linear-gradient(180deg, rgba(123, 200, 180, 0.12), rgba(11, 20, 33, 0.55));
-      padding: 12px;
-    }
-    .file-channel-brief h3 {
-      margin: 0 0 6px;
-      color: var(--text-strong);
-      font-size: 18px;
-      font-weight: 700;
-    }
-    .file-channel-brief p {
-      margin: 0 0 8px;
-      color: var(--text-main);
-      font-size: 13px;
-      line-height: 1.45;
-    }
-    .file-channel-brief ul {
-      margin: 0;
-      padding-left: 18px;
-      color: #b5ddd2;
-      font-size: 12px;
-      line-height: 1.5;
-      display: grid;
-      gap: 3px;
-    }
-    .file-crypto-stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-    }
-    .file-crypto-stat {
-      border: 1px solid var(--line-soft);
-      border-radius: 9px;
-      background: rgba(10, 18, 30, 0.72);
-      padding: 7px 9px;
-      display: grid;
-      gap: 2px;
-      min-width: 0;
-    }
-    .file-crypto-stat span {
-      color: var(--text-muted);
+      border-radius: 999px;
+      padding: 3px 8px;
       font-size: 10px;
-      text-transform: uppercase;
       letter-spacing: 0.08em;
-      font-weight: 700;
-    }
-    .file-crypto-stat strong {
-      color: var(--text-strong);
-      font-size: 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .file-crypto-workspace {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      align-items: start;
-    }
-    .file-crypto-main,
-    .file-crypto-side {
-      border: 1px solid var(--line-soft);
-      border-radius: 10px;
-      background: rgba(9, 16, 27, 0.6);
-      padding: 10px;
-      min-width: 0;
-    }
-    .file-dropzone {
-      border: 1px dashed rgba(240, 203, 130, 0.35);
-      border-radius: 10px;
-      min-height: 130px;
-      padding: 14px;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      cursor: pointer;
-      background: linear-gradient(180deg, rgba(18, 31, 48, 0.55), rgba(8, 14, 24, 0.52));
-      transition: all 180ms ease;
-      margin-bottom: 10px;
-    }
-    .file-dropzone:hover,
-    .file-dropzone.dragover {
-      border-color: rgba(240, 203, 130, 0.85);
-      background: linear-gradient(180deg, rgba(29, 47, 69, 0.76), rgba(12, 20, 31, 0.72));
-      transform: translateY(-1px);
-    }
-    .file-dropzone-input {
-      display: none;
-    }
-    .file-dropzone-icon {
-      font-size: 24px;
-      margin-bottom: 4px;
-    }
-    .file-dropzone-title {
-      color: var(--text-strong);
-      font-weight: 700;
-      font-size: 14px;
-    }
-    .file-dropzone-sub {
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-    .file-crypto-side-title {
-      color: var(--text-strong);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.07em;
       text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .file-crypto-empty {
-      color: var(--text-muted);
-      font-size: 12px;
-      line-height: 1.4;
-      border: 1px dashed var(--line-soft);
-      border-radius: 9px;
-      padding: 10px;
-    }
-    .file-crypto-job {
-      border: 1px solid var(--line-soft);
-      border-radius: 9px;
-      background: rgba(13, 22, 34, 0.78);
-      padding: 8px;
-      margin-bottom: 7px;
-      display: grid;
-      gap: 3px;
-    }
-    .file-crypto-job:last-child {
-      margin-bottom: 0;
-    }
-    .file-crypto-job-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    .file-crypto-job-head strong {
-      font-size: 11px;
-      color: #96ead6;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-    .file-crypto-job-head span {
-      color: var(--text-muted);
-      font-size: 10px;
-      font-family: "IBM Plex Mono", monospace;
-    }
-    .file-crypto-job-line {
       color: var(--text-main);
-      font-size: 11px;
-      font-family: "IBM Plex Mono", monospace;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      background: rgba(10, 18, 30, 0.68);
     }
-    .file-crypto-header {
+    .role-owner {
+      color: #ffd98b;
+      border-color: rgba(240, 203, 130, 0.5);
+    }
+    .role-admin {
+      color: #9ae2ce;
+      border-color: rgba(123, 200, 180, 0.45);
+    }
+    .search-inline {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 8px;
-    }
-    .file-crypto-header h3 {
-      margin: 0;
-      color: var(--text-strong);
-      font-family: "Cormorant Garamond", serif;
-      font-size: 25px;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .file-crypto-tabs {
-      display: flex;
       gap: 6px;
     }
-    .file-crypto-tab {
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(27, 42, 62, 0.6);
-      color: var(--text-main);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 5px 11px;
-      cursor: pointer;
-      transition: all 160ms ease;
-    }
-    .file-crypto-tab.active {
-      background: linear-gradient(135deg, #f0cb82, #d8ae60);
-      color: #2f2513;
-      border-color: transparent;
-    }
-    .file-crypto-note {
-      margin: 0;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .file-crypto-input {
-      width: 100%;
+    .search-inline-input {
+      width: min(250px, 34vw);
       border: 1px solid var(--line-soft);
       border-radius: 9px;
       background: rgba(10, 18, 29, 0.84);
-      color: #f5efdf;
-      padding: 9px 10px;
-      font-size: 13px;
+      color: var(--text-strong);
       font-family: inherit;
-      transition: border-color 160ms ease, box-shadow 160ms ease;
+      font-size: 12px;
+      padding: 6px 8px;
     }
-    .file-crypto-input:focus {
+    .search-inline-input:focus {
+      outline: none;
       border-color: rgba(240, 203, 130, 0.75);
       box-shadow: 0 0 0 3px rgba(240, 203, 130, 0.14);
-      outline: none;
     }
-    .file-crypto-meta {
-      display: grid;
-      gap: 4px;
-      font-size: 12px;
-      color: #c9d0d0;
+    .encryption-meta-banner {
+      border-bottom: 1px solid var(--line-soft);
+      color: #d8decf;
+      font-size: 11px;
+      padding: 7px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: rgba(9, 16, 27, 0.55);
+    }
+    .encryption-meta-divider {
+      color: var(--text-muted);
+    }
+    .encryption-meta-match {
+      color: #b0d9ce;
       font-family: "IBM Plex Mono", monospace;
     }
-    .file-crypto-error {
-      margin: 0;
-      font-size: 12px;
-      color: var(--danger);
-      font-weight: 700;
+    .date-separator {
+      display: flex;
+      justify-content: center;
+      margin: 12px 0 8px;
     }
-    .file-crypto-status {
-      margin: 0;
-      font-size: 12px;
-      color: #7ce0c3;
-      font-weight: 700;
-    }
-    .file-crypto-run {
-      border: 0;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #f0cb82 0%, #d9b269 100%);
-      color: #2d2413;
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.07em;
+    .date-separator span {
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      background: rgba(10, 17, 28, 0.74);
+      color: var(--text-main);
+      font-size: 11px;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      padding: 9px 12px;
+      padding: 5px 10px;
+    }
+    .msg-group.grouped {
+      grid-template-columns: 18px minmax(0, 1fr);
+      padding-top: 3px;
+    }
+    .msg-avatar-gap {
+      width: 18px;
+      height: 1px;
+    }
+    .msg-group.matched {
+      background: rgba(240, 203, 130, 0.08);
+      border-color: rgba(240, 203, 130, 0.25);
+    }
+    .msg-group.match-focus {
+      border-color: rgba(240, 203, 130, 0.64);
+      box-shadow: 0 0 0 2px rgba(240, 203, 130, 0.12);
+    }
+    .msg-edited {
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: lowercase;
+    }
+    .msg-status {
+      border-radius: 999px;
+      padding: 1px 6px;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid var(--line-soft);
+      margin-left: auto;
+    }
+    .msg-status-sending {
+      color: #e8d6aa;
+    }
+    .msg-status-failed {
+      color: #ffb3b8;
+      border-color: rgba(255, 143, 151, 0.5);
+    }
+    .reply-pill {
+      margin-top: 6px;
+      border-left: 2px solid rgba(123, 200, 180, 0.72);
+      padding: 4px 8px;
+      font-size: 12px;
+      color: #bad7d0;
+      background: rgba(13, 24, 38, 0.55);
+      border-radius: 7px;
+    }
+    .msg-menu-card {
+      position: absolute;
+      top: 30px;
+      right: 0;
+      z-index: 40;
+      min-width: 170px;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      background: rgba(9, 16, 27, 0.97);
+      box-shadow: 0 14px 28px rgba(4, 8, 15, 0.55);
+      overflow: hidden;
+      display: grid;
+    }
+    .messages-list.menu-active .msg-group {
+      background: transparent !important;
+    }
+    .messages-list.menu-active .msg-group {
+      pointer-events: none;
+    }
+    .messages-list.menu-active .msg-group.menu-open,
+    .messages-list.menu-active .msg-group.menu-open * {
+      pointer-events: auto;
+    }
+    .msg-menu-item {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--line-soft);
+      background: transparent;
+      color: var(--text-main);
+      font-size: 12px;
+      text-align: left;
+      padding: 8px 10px;
       cursor: pointer;
-      transition: all 160ms ease;
+      transition: background 130ms ease, color 130ms ease;
     }
-    .file-crypto-run:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 18px rgba(5, 9, 16, 0.34);
+    .msg-menu-item:last-child {
+      border-bottom: 0;
     }
-    .file-crypto-run:disabled {
-      opacity: 0.6;
-      cursor: wait;
-      box-shadow: none;
+    .msg-menu-item:hover {
+      background: rgba(29, 44, 66, 0.76);
+      color: var(--text-strong);
+    }
+    .msg-menu-item.danger:hover {
+      background: rgba(52, 27, 33, 0.9);
+      color: #ffccd1;
+    }
+    .edit-row {
+      margin-top: 6px;
+      display: grid;
+      gap: 8px;
+    }
+    .edit-input {
+      min-height: 72px;
+      resize: vertical;
+      border-radius: 10px;
+      border: 1px solid var(--line-soft);
+      background: rgba(10, 18, 30, 0.82);
+      color: var(--text-strong);
+      padding: 8px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .edit-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .decrypt-hint {
+      margin-top: 5px;
+      color: #f0bbbf;
+      font-size: 11px;
+    }
+    .empty-chat-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .reply-preview {
+      margin-bottom: 8px;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      background: rgba(15, 25, 40, 0.86);
+      color: var(--text-main);
+      font-size: 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 8px;
+    }
+    .channel-member-role {
+      margin-left: auto;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+    }
+    mark {
+      background: rgba(240, 203, 130, 0.36);
+      color: #fff7dc;
+      border-radius: 3px;
+      padding: 0 1px;
+    }
+    .icon-btn {
+      min-width: 36px;
+      min-height: 36px;
+      padding: 6px 9px;
+      font-size: 13px;
+    }
+    .send-btn {
+      min-height: 38px;
+      min-width: 88px;
+      font-size: 12px;
     }
 
     ::-webkit-scrollbar { width: 10px; height: 10px; }
@@ -1368,6 +1349,16 @@
         flex-direction: column;
         align-items: flex-start;
       }
+      .chat-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      .search-inline {
+        width: 100%;
+      }
+      .search-inline-input {
+        width: 100%;
+      }
       .cipher-toggle { justify-content: flex-start; }
       .chat-content-layout {
         grid-template-columns: 1fr;
@@ -1379,24 +1370,15 @@
         border-top: 1px solid var(--line-soft);
         max-height: 32vh;
       }
-      .messages-list { padding: 10px 10px 116px; }
-      .chat-input-bar { padding: 10px 10px 12px; }
+      .messages-list { padding: 10px 10px 12px; }
+      .chat-input-bar {
+        padding: 10px 10px calc(12px + env(safe-area-inset-bottom));
+      }
       .chat-input-form { grid-template-columns: minmax(0, 1fr); }
       .send-btn { width: 100%; }
-      .msg-encrypted-pill { max-width: 100%; }
       .jump-latest-btn {
         right: 12px;
         bottom: 80px;
-      }
-      .file-crypto-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-      .file-crypto-stats {
-        grid-template-columns: 1fr;
-      }
-      .file-crypto-workspace {
-        grid-template-columns: 1fr;
       }
     }
   </style>
