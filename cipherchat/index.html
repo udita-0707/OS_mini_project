@@ -246,41 +246,6 @@
       box-shadow: 0 10px 20px rgba(7, 12, 20, 0.32);
     }
 
-    .members-panel {
-      margin: 2px 8px 8px;
-      border: 1px solid var(--line-soft);
-      border-radius: 11px;
-      padding: 10px;
-      background: rgba(9, 16, 28, 0.55);
-      max-height: 180px;
-      min-height: 0;
-      overflow-y: auto;
-    }
-    .members-title {
-      color: var(--text-muted);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.11em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .member-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-main);
-      font-size: 13px;
-      padding: 5px 0;
-    }
-    .member-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex: none;
-      background: var(--ok);
-      animation: pulseGlow 2.2s ease-in-out infinite;
-    }
-
     .user-bar {
       border-top: 1px solid var(--line);
       margin-top: auto;
@@ -405,6 +370,11 @@
       color: var(--text-strong);
       transform: translateY(-1px);
     }
+    .icon-btn.active {
+      border-color: rgba(123, 200, 180, 0.7);
+      color: #b5efe0;
+      background: rgba(20, 45, 54, 0.78);
+    }
     .icon-btn:disabled {
       opacity: 0.45;
       cursor: not-allowed;
@@ -413,6 +383,10 @@
     .icon-btn-danger:hover:not(:disabled) {
       border-color: rgba(255, 143, 151, 0.7);
       color: #ffc2c7;
+    }
+    .icon-btn-warn:hover:not(:disabled) {
+      border-color: rgba(255, 203, 131, 0.7);
+      color: #ffe7bf;
     }
     .cipher-btn {
       border: 1px solid var(--line);
@@ -448,6 +422,122 @@
       font-size: 12px;
       font-weight: 700;
     }
+    .channel-fingerprint-bar {
+      margin: 10px 16px 0;
+      border: 1px solid rgba(123, 200, 180, 0.4);
+      background: rgba(123, 200, 180, 0.1);
+      border-radius: 10px;
+      padding: 9px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .channel-fingerprint-meta {
+      display: grid;
+      gap: 2px;
+    }
+    .channel-fingerprint-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: #9ccfc1;
+      font-weight: 700;
+    }
+    .channel-fingerprint-code {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 12px;
+      color: #dffdf4;
+    }
+    .channel-fingerprint-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mini-btn {
+      border: 1px solid var(--line-soft);
+      background: rgba(11, 18, 31, 0.5);
+      color: var(--text-main);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 140ms ease;
+    }
+    .mini-btn:hover {
+      color: var(--text-strong);
+      border-color: rgba(240, 203, 130, 0.65);
+    }
+    .mini-btn-danger:hover {
+      border-color: rgba(255, 143, 151, 0.7);
+      color: #ffcad1;
+    }
+    .hash-status {
+      margin: 6px 16px 0;
+      color: #9ce5d3;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .saved-hash-panel {
+      margin: 10px 16px 0;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      background: rgba(8, 15, 25, 0.72);
+      padding: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+      display: grid;
+      gap: 8px;
+    }
+    .saved-hash-title {
+      color: var(--text-strong);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .saved-hash-empty {
+      color: var(--text-muted);
+      font-size: 12px;
+      border: 1px dashed var(--line-soft);
+      border-radius: 8px;
+      padding: 9px;
+    }
+    .saved-hash-item {
+      border: 1px solid var(--line-soft);
+      border-radius: 8px;
+      background: rgba(11, 19, 31, 0.8);
+      padding: 8px;
+      display: grid;
+      gap: 5px;
+    }
+    .saved-hash-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--text-main);
+      font-size: 11px;
+    }
+    .saved-hash-row strong {
+      color: var(--text-strong);
+    }
+    .saved-hash-item code {
+      font-family: "IBM Plex Mono", monospace;
+      color: #b9efe1;
+      font-size: 11px;
+      word-break: break-all;
+    }
+    .saved-hash-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
 
     .messages-list {
       flex: 1;
@@ -456,6 +546,69 @@
       overflow-x: hidden;
       padding: 12px 16px 122px;
       scroll-behavior: smooth;
+    }
+    .chat-content-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      flex: 1;
+      min-height: 0;
+    }
+    .chat-main-column {
+      position: relative;
+      min-height: 0;
+      border-right: 1px solid var(--line-soft);
+    }
+    .channel-members-pane {
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: rgba(8, 14, 24, 0.72);
+    }
+    .channel-members-pane-title {
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid var(--line-soft);
+      color: var(--text-strong);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .channel-members-pane-list {
+      padding: 8px;
+      overflow-y: auto;
+      min-height: 0;
+      display: grid;
+      gap: 6px;
+    }
+    .channel-member-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-main);
+      font-size: 13px;
+      background: rgba(17, 30, 47, 0.45);
+    }
+    .channel-member-row:hover {
+      border-color: var(--line-soft);
+      background: rgba(25, 39, 58, 0.7);
+    }
+    .channel-member-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      flex: none;
+    }
+    .channel-member-empty {
+      color: var(--text-muted);
+      font-size: 12px;
+      border: 1px dashed var(--line-soft);
+      border-radius: 8px;
+      padding: 10px;
     }
     .msg-group {
       display: grid;
@@ -504,6 +657,23 @@
     .msg-cipher-tag.secure {
       color: #8fe4cf;
       border-color: rgba(123, 200, 180, 0.4);
+    }
+    .msg-delete-btn {
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: rgba(16, 26, 41, 0.72);
+      color: #bdc5d3;
+      font-size: 11px;
+      line-height: 1;
+      padding: 3px 6px;
+      cursor: pointer;
+      transition: all 140ms ease;
+      margin-left: auto;
+    }
+    .msg-delete-btn:hover {
+      border-color: rgba(255, 143, 151, 0.65);
+      color: #ffc5cb;
+      background: rgba(33, 24, 33, 0.86);
     }
     .msg-sender {
       color: var(--text-strong);
@@ -656,6 +826,30 @@
       color: var(--text-main);
       padding: 20px;
     }
+    .chat-empty-start {
+      position: relative;
+      overflow: hidden;
+      border: 1px dashed var(--line-soft);
+      border-radius: 14px;
+      margin: 8px 6px 0;
+      min-height: 300px;
+      background: radial-gradient(circle at 50% 0%, rgba(240, 203, 130, 0.08), rgba(11, 18, 29, 0.5));
+    }
+    .chat-empty-orb {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(240, 203, 130, 0.25), transparent 70%);
+      top: 20%;
+      left: calc(50% - 80px);
+      animation: floatPulse 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes floatPulse {
+      0%, 100% { transform: translateY(0px) scale(1); opacity: 0.6; }
+      50% { transform: translateY(-8px) scale(1.08); opacity: 0.95; }
+    }
     .chat-empty-icon { font-size: 40px; }
     .chat-empty-text {
       color: var(--text-strong);
@@ -723,13 +917,59 @@
       border-color: rgba(240, 203, 130, 0.7);
       box-shadow: 0 0 0 3px rgba(240, 203, 130, 0.16);
     }
-    .modal-checkbox-row {
+    .modal-switch-row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       color: var(--text-main);
       font-size: 14px;
       margin-bottom: 10px;
+    }
+    .modal-switch-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .modal-switch-slider {
+      width: 44px;
+      height: 24px;
+      border-radius: 999px;
+      border: 1px solid var(--line-soft);
+      background: rgba(13, 22, 35, 0.88);
+      position: relative;
+      transition: all 180ms ease;
+      flex: none;
+    }
+    .modal-switch-slider::after {
+      content: "";
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      background: #d4c8ae;
+      transition: all 180ms ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+    .modal-switch-input:checked + .modal-switch-slider {
+      background: linear-gradient(120deg, rgba(240, 203, 130, 0.85), rgba(123, 200, 180, 0.85));
+      border-color: transparent;
+    }
+    .modal-switch-input:checked + .modal-switch-slider::after {
+      left: 22px;
+      background: #fff9ee;
+    }
+    .modal-switch-text {
+      display: grid;
+      gap: 1px;
+      font-weight: 600;
+      color: #efe7d6;
+    }
+    .modal-switch-text small {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 500;
     }
     .modal-error {
       color: var(--danger);
@@ -818,6 +1058,170 @@
       flex-direction: column;
       gap: 10px;
       box-shadow: inset 0 0 0 1px rgba(240, 203, 130, 0.05);
+    }
+    .file-channel-stage {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 10px 6px 20px;
+    }
+    .file-channel-brief {
+      margin: 0 8px 10px;
+      border: 1px solid rgba(123, 200, 180, 0.32);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(123, 200, 180, 0.12), rgba(11, 20, 33, 0.55));
+      padding: 12px;
+    }
+    .file-channel-brief h3 {
+      margin: 0 0 6px;
+      color: var(--text-strong);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .file-channel-brief p {
+      margin: 0 0 8px;
+      color: var(--text-main);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .file-channel-brief ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #b5ddd2;
+      font-size: 12px;
+      line-height: 1.5;
+      display: grid;
+      gap: 3px;
+    }
+    .file-crypto-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .file-crypto-stat {
+      border: 1px solid var(--line-soft);
+      border-radius: 9px;
+      background: rgba(10, 18, 30, 0.72);
+      padding: 7px 9px;
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .file-crypto-stat span {
+      color: var(--text-muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+    .file-crypto-stat strong {
+      color: var(--text-strong);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-crypto-workspace {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .file-crypto-main,
+    .file-crypto-side {
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      background: rgba(9, 16, 27, 0.6);
+      padding: 10px;
+      min-width: 0;
+    }
+    .file-dropzone {
+      border: 1px dashed rgba(240, 203, 130, 0.35);
+      border-radius: 10px;
+      min-height: 130px;
+      padding: 14px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(18, 31, 48, 0.55), rgba(8, 14, 24, 0.52));
+      transition: all 180ms ease;
+      margin-bottom: 10px;
+    }
+    .file-dropzone:hover,
+    .file-dropzone.dragover {
+      border-color: rgba(240, 203, 130, 0.85);
+      background: linear-gradient(180deg, rgba(29, 47, 69, 0.76), rgba(12, 20, 31, 0.72));
+      transform: translateY(-1px);
+    }
+    .file-dropzone-input {
+      display: none;
+    }
+    .file-dropzone-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    .file-dropzone-title {
+      color: var(--text-strong);
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .file-dropzone-sub {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .file-crypto-side-title {
+      color: var(--text-strong);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .file-crypto-empty {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.4;
+      border: 1px dashed var(--line-soft);
+      border-radius: 9px;
+      padding: 10px;
+    }
+    .file-crypto-job {
+      border: 1px solid var(--line-soft);
+      border-radius: 9px;
+      background: rgba(13, 22, 34, 0.78);
+      padding: 8px;
+      margin-bottom: 7px;
+      display: grid;
+      gap: 3px;
+    }
+    .file-crypto-job:last-child {
+      margin-bottom: 0;
+    }
+    .file-crypto-job-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .file-crypto-job-head strong {
+      font-size: 11px;
+      color: #96ead6;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .file-crypto-job-head span {
+      color: var(--text-muted);
+      font-size: 10px;
+      font-family: "IBM Plex Mono", monospace;
+    }
+    .file-crypto-job-line {
+      color: var(--text-main);
+      font-size: 11px;
+      font-family: "IBM Plex Mono", monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .file-crypto-header {
       display: flex;
@@ -939,6 +1343,7 @@
       .chat-header h2 { font-size: 26px; }
       .cipher-btn { font-size: 10px; padding: 6px 9px; }
       .msg-text { font-size: 15px; }
+      .chat-content-layout { grid-template-columns: minmax(0, 1fr); }
     }
 
     @media (max-width: 760px) {
@@ -964,6 +1369,16 @@
         align-items: flex-start;
       }
       .cipher-toggle { justify-content: flex-start; }
+      .chat-content-layout {
+        grid-template-columns: 1fr;
+      }
+      .chat-main-column {
+        border-right: 0;
+      }
+      .channel-members-pane {
+        border-top: 1px solid var(--line-soft);
+        max-height: 32vh;
+      }
       .messages-list { padding: 10px 10px 116px; }
       .chat-input-bar { padding: 10px 10px 12px; }
       .chat-input-form { grid-template-columns: minmax(0, 1fr); }
@@ -976,6 +1391,12 @@
       .file-crypto-header {
         flex-direction: column;
         align-items: flex-start;
+      }
+      .file-crypto-stats {
+        grid-template-columns: 1fr;
+      }
+      .file-crypto-workspace {
+        grid-template-columns: 1fr;
       }
     }
   </style>

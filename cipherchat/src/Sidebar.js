@@ -19,12 +19,13 @@ const getStringColor = (str) => {
     return `hsl(${h}, 65%, 55%)`;
 };
 
+const cleanChannelName = (value) => (value || '').replace(/^#+/, '');
+
 /**
  * Sidebar component
  * @param {Object[]} channels       – array from channels.js
  * @param {string|null} activeChannel – id of the channel the user is currently in
  * @param {Function} onJoin         – called with channelId when user clicks Join
- * @param {Object[]} members        – array of member records for the active channel
  * @param {string} username         – current user's display name
  * @param {Function} onCreateChannelClick – called when user clicks + to create channel
  * @param {Function} onExploreClick – called when user clicks Explore Channels
@@ -33,7 +34,6 @@ const Sidebar = ({
     channels,
     activeChannel,
     onJoin,
-    members,
     username,
     onCreateChannelClick,
     onExploreClick,
@@ -43,16 +43,6 @@ const Sidebar = ({
         if (a.id === 'file-crypto') return -1;
         if (b.id === 'file-crypto') return 1;
         return a.name.localeCompare(b.name);
-    });
-
-    // Deduplicate members by username so each person shows once
-    const uniqueMembers = [];
-    const seen = new Set();
-    (members || []).forEach((m) => {
-        if (!seen.has(m.username)) {
-            seen.add(m.username);
-            uniqueMembers.push(m);
-        }
     });
 
     return (
@@ -84,7 +74,7 @@ const Sidebar = ({
                             <div className="channel-info">
                                 <div className="channel-name">
                                     <span className="channel-icon">#</span>
-                                    {ch.name}
+                                    {cleanChannelName(ch.name)}
                                     {isPinned && <span className="pin-icon" title="Pinned Channel">📌</span>}
                                     {ch.isPrivate && <span className="private-icon" title="Private Channel">🔒</span>}
                                 </div>
@@ -104,21 +94,6 @@ const Sidebar = ({
                     🧭 Explore Channels
                 </button>
             </div>
-
-            {/* ---- Members Panel (only when a channel is active) ---- */}
-            {activeChannel && (
-                <div className="members-panel">
-                    <div className="members-title">
-                        Members Online — {uniqueMembers.length}
-                    </div>
-                    {uniqueMembers.map((m) => (
-                        <div key={m.username} className="member-item">
-                            <span className="member-dot" />
-                            {m.username}
-                        </div>
-                    ))}
-                </div>
-            )}
 
             {/* ---- Current User Bar ---- */}
             {username && (

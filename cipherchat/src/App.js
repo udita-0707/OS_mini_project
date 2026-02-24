@@ -17,6 +17,25 @@ const MODALS = {
     DELETE: 'delete'
 };
 
+const bytesToHex = (bytes) => Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+
+const formatFingerprint = (hex) => {
+    const compact = (hex || '').toUpperCase().slice(0, 32);
+    return compact.match(/.{1,4}/g)?.join('-') || '';
+};
+
+const generateChannelFingerprint = async (channelId) => {
+    const seed = `cipherchat-public:${channelId}`;
+    if (!crypto?.subtle) {
+        return formatFingerprint(btoa(seed).replace(/[^A-Z0-9]/gi, '').slice(0, 32));
+    }
+    const data = new TextEncoder().encode(seed);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return formatFingerprint(bytesToHex(new Uint8Array(digest)));
+};
+
 const App = () => {
     const [username, setUsername] = useState(() => localStorage.getItem('username') || '');
     const [encryptionPassphrase, setEncryptionPassphrase] = useState(
@@ -24,7 +43,7 @@ const App = () => {
     );
     const [showPrompt, setShowPrompt] = useState(!username);
     const [channels, setChannels] = useState([]);
-    const [members, setMembers] = useState([]);
+    const [activeMembers, setActiveMembers] = useState([]);
     const [joinedChannelIds, setJoinedChannelIds] = useState(() => new Set(DEFAULT_JOINED_CHANNELS));
     const [unlockedChannels, setUnlockedChannels] = useState(new Set());
     const [activeChannel, setActiveChannel] = useState(null);
@@ -42,8 +61,16 @@ const App = () => {
     useEffect(() => {
         const unsubscribe = onData('channels', async (data) => {
             if (!data || Object.keys(data).length === 0) {
+                const seededChannels = await Promise.all(
+                    CHANNELS.map(async (channel) => ({
+                        ...channel,
+                        fingerprint: channel.isPrivate
+                            ? null
+                            : await generateChannelFingerprint(channel.id)
+                    }))
+                );
                 await Promise.all(
-                    CHANNELS.map((channel) => setData(`channels/${channel.id}`, channel))
+                    seededChannels.map((channel) => setData(`channels/${channel.id}`, channel))
                 );
                 return;
             }
@@ -53,6 +80,22 @@ const App = () => {
                 await Promise.all(
                     missingDefaultChannels.map((channel) =>
                         setData(`channels/${channel.id}`, channel)
+                    )
+                );
+                return;
+            }
+
+            const missingFingerprints = Object.entries(data).filter(([key, value]) =>
+                value && !value.isPrivate && !value.fingerprint && key
+            );
+            if (missingFingerprints.length) {
+                await Promise.all(
+                    missingFingerprints.map(async ([key, value]) =>
+                        setData(`channels/${key}`, {
+                            ...value,
+                            id: key,
+                            fingerprint: await generateChannelFingerprint(key)
+                        })
                     )
                 );
                 return;
@@ -87,21 +130,26 @@ const App = () => {
 
     useEffect(() => {
         if (!activeChannel) {
-            setMembers([]);
+            setActiveMembers([]);
             return undefined;
         }
 
         const unsubscribe = onData(`members/${activeChannel}`, (data) => {
             if (!data) {
-                setMembers([]);
+                setActiveMembers([]);
                 return;
             }
 
-            const membersList = Object.keys(data).map((key) => ({
-                ...data[key],
-                id: key
-            }));
-            setMembers(membersList);
+            const unique = new Set();
+            const membersList = Object.keys(data)
+                .map((key) => ({ ...data[key], id: key }))
+                .filter((m) => {
+                    if (!m?.username) return false;
+                    if (unique.has(m.username)) return false;
+                    unique.add(m.username);
+                    return true;
+                });
+            setActiveMembers(membersList);
         });
 
         return () => {
@@ -207,12 +255,16 @@ const App = () => {
         }
 
         try {
+            const fingerprint = createChannelPrivate
+                ? null
+                : await generateChannelFingerprint(channelId);
             await setData(`channels/${channelId}`, {
                 id: channelId,
                 name: channelId,
                 description,
                 isPrivate: createChannelPrivate,
-                password: createChannelPrivate ? password : null
+                password: createChannelPrivate ? password : null,
+                fingerprint
             });
             setActiveModal(MODALS.NONE);
             setCreateError('');
@@ -319,7 +371,6 @@ const App = () => {
                 channels={channels.filter((channel) => joinedChannelIds.has(channel.id))}
                 activeChannel={activeChannel}
                 onJoin={handleJoinChannel}
-                members={members}
                 username={username}
                 onCreateChannelClick={() => {
                     setCreateError('');
@@ -335,6 +386,7 @@ const App = () => {
             <Chat
                 username={username}
                 channel={activeChannelData}
+                activeMembers={activeMembers}
                 encryptionPassphrase={encryptionPassphrase}
                 onAboutChannel={openAboutChannel}
                 onRequestDeleteChannel={() => requestDeleteChannel(activeChannelData)}
@@ -384,14 +436,19 @@ const App = () => {
                             placeholder="Short description"
                             required
                         />
-                        <label className="modal-checkbox-row">
+                        <label className="modal-switch-row">
                             <input
                                 type="checkbox"
                                 name="isPrivate"
+                                className="modal-switch-input"
                                 checked={createChannelPrivate}
                                 onChange={(e) => setCreateChannelPrivate(e.target.checked)}
                             />
-                            Private channel
+                            <span className="modal-switch-slider" />
+                            <span className="modal-switch-text">
+                                Private channel
+                                <small>Password required to join</small>
+                            </span>
                         </label>
                         {createChannelPrivate && (
                             <input
@@ -548,6 +605,12 @@ const App = () => {
                         <p>
                             Status: <strong>{selectedChannel.id === PROTECTED_CHANNEL_ID ? 'Pinned / Protected' : 'Standard'}</strong>
                         </p>
+                        {!selectedChannel.isPrivate && selectedChannel.fingerprint && (
+                            <p>
+                                Public channel fingerprint:
+                                <strong> {selectedChannel.fingerprint}</strong>
+                            </p>
+                        )}
                         <div className="modal-actions">
                             <button
                                 type="button"
