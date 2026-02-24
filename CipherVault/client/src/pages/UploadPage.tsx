@@ -45,7 +45,14 @@ export default function UploadPage() {
     formData.append('file', file);
     formData.append('passphrase', passphrase);
     formData.append('algorithm', algorithm);
-    if (expiryHours) formData.append('expiry_hours', expiryHours);
+    if (expiryHours) {
+      if (parseFloat(expiryHours) <= 0) {
+        toast.error('Expiry hours must be greater than 0');
+        setUploading(false);
+        return;
+      }
+      formData.append('expiry_hours', expiryHours);
+    }
 
     // Simulate encryption progress
     const interval = setInterval(() => {
@@ -106,9 +113,8 @@ export default function UploadPage() {
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
-            className={`glass-card p-8 border-2 border-dashed transition-all duration-300 cursor-pointer ${
-              dragOver ? 'border-vault-accent bg-vault-accent/5' : 'border-vault-border hover:border-gray-600'
-            }`}
+            className={`glass-card p-8 border-2 border-dashed transition-all duration-300 cursor-pointer ${dragOver ? 'border-vault-accent bg-vault-accent/5' : 'border-vault-border hover:border-gray-600'
+              }`}
             onClick={() => {
               const input = document.createElement('input');
               input.type = 'file';
@@ -146,11 +152,10 @@ export default function UploadPage() {
                   key={algo.value}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setAlgorithm(algo.value)}
-                  className={`p-4 rounded-xl border text-left transition-all duration-300 ${
-                    algorithm === algo.value
-                      ? `border-${algo.color}/50 bg-${algo.color}/10`
-                      : 'border-vault-border bg-vault-card/60 hover:border-gray-600'
-                  }`}
+                  className={`p-4 rounded-xl border text-left transition-all duration-300 ${algorithm === algo.value
+                    ? `border-${algo.color}/50 bg-${algo.color}/10`
+                    : 'border-vault-border bg-vault-card/60 hover:border-gray-600'
+                    }`}
                 >
                   <p className={`text-sm font-semibold ${algorithm === algo.value ? `text-${algo.color}` : 'text-white'}`}>
                     {algo.label}
@@ -187,8 +192,12 @@ export default function UploadPage() {
               <HiOutlineClock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
               <input
                 type="number"
+                min="1"
                 value={expiryHours}
-                onChange={(e) => setExpiryHours(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || parseFloat(val) > 0) setExpiryHours(val);
+                }}
                 className="cyber-input pl-10"
                 placeholder="Leave empty for no expiry"
               />

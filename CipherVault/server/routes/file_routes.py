@@ -77,9 +77,12 @@ def upload_file():
 
     # Step 7: Store metadata in database
     expiry_time = None
-    if expiry_hours:
+    if (expiry_hours):
         try:
-            expiry_time = datetime.now(timezone.utc) + timedelta(hours=float(expiry_hours))
+            h = float(expiry_hours)
+            if h <= 0:
+                return jsonify({"error": "Expiry hours must be greater than 0"}), 400
+            expiry_time = datetime.now(timezone.utc) + timedelta(hours=h)
         except ValueError:
             pass
 

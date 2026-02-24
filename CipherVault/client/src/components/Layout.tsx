@@ -50,10 +50,9 @@ export default function Layout() {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 group ${
-                  isActive
-                    ? 'bg-vault-accent/10 text-vault-accent border border-vault-accent/20'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 group ${isActive
+                  ? 'bg-vault-accent/10 text-vault-accent border border-vault-accent/20'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`
               }
             >
@@ -83,7 +82,7 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto relative">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

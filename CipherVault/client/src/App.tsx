@@ -13,6 +13,7 @@ import RansomwareDemoPage from './pages/RansomwareDemoPage';
 import RoomsPage from './pages/RoomsPage';
 import RoomDetailPage from './pages/RoomDetailPage';
 import LandingPage from './pages/LandingPage';
+import ShareAccessPage from './pages/ShareAccessPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -42,13 +43,14 @@ export default function App() {
         }}
       />
       <Routes>
-        <Route 
-          path="/" 
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />} 
+        <Route
+          path="/"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />}
         />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        
+        <Route path="/share/:token" element={<ShareAccessPage />} />
+
         <Route
           path="/"
           element={
@@ -64,7 +66,7 @@ export default function App() {
           <Route path="rooms/:id" element={<RoomDetailPage />} />
           <Route path="security-monitor" element={<SecurityMonitorPage />} />
         </Route>
-        
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

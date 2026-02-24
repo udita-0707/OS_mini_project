@@ -75,9 +75,14 @@ export default function VaultPage() {
   const handleShare = async () => {
     if (!shareModal) return;
     try {
+      const hours = parseFloat(shareHours);
+      if (hours <= 0) {
+        toast.error('Expiry must be greater than 0 hours');
+        return;
+      }
       const res = await securityAPI.createShareLink({
         file_id: shareModal,
-        expiry_hours: parseFloat(shareHours),
+        expiry_hours: hours,
         passphrase: sharePass || undefined,
       });
       setShareResult(window.location.origin + res.data.link);
@@ -241,7 +246,16 @@ export default function VaultPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">Expiry (hours)</label>
-                  <input type="number" value={shareHours} onChange={(e) => setShareHours(e.target.value)} className="cyber-input" />
+                  <input
+                    type="number"
+                    min="1"
+                    value={shareHours}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '' || parseFloat(val) > 0) setShareHours(val);
+                    }}
+                    className="cyber-input"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-400 mb-1 uppercase tracking-wider">Passphrase (optional)</label>

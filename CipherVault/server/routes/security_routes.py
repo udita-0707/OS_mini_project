@@ -99,7 +99,13 @@ def create_share_link():
 
     # Generate secure random token
     token = secrets.token_urlsafe(48)
-    expiry = datetime.now(timezone.utc) + timedelta(hours=float(expiry_hours))
+    try:
+        h = float(expiry_hours)
+        if h <= 0:
+            return jsonify({"error": "Expiry must be greater than 0 hours"}), 400
+        expiry = datetime.now(timezone.utc) + timedelta(hours=h)
+    except ValueError:
+        return jsonify({"error": "Invalid expiry hours format"}), 400
 
     # Hash passphrase if provided
     passphrase_hash = None
@@ -123,7 +129,7 @@ def create_share_link():
     return jsonify({
         "message": "Share link created",
         "share": share_link.to_dict(),
-        "link": f"/api/security/share/access?token={token}",
+        "link": f"/share/{token}",
     }), 201
 
 

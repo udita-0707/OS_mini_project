@@ -11,7 +11,6 @@ import {
   HiOutlineTrash,
   HiOutlineLockClosed,
   HiOutlineLockOpen,
-  HiOutlineChatBubbleLeftRight,
   HiOutlineCloudArrowUp,
   HiOutlineUserGroup,
 } from 'react-icons/hi2';
@@ -81,7 +80,7 @@ export default function RoomDetailPage() {
     try {
       const res = await roomsAPI.getChat(roomId);
       setMessages(res.data.messages || []);
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -174,7 +173,6 @@ export default function RoomDetailPage() {
   const tabs = [
     { key: 'files', label: 'Files', icon: HiOutlineDocumentText },
     { key: 'members', label: 'Members', icon: HiOutlineUserGroup },
-    { key: 'chat', label: 'Chat', icon: HiOutlineChatBubbleLeftRight },
   ] as const;
 
   return (
@@ -322,34 +320,6 @@ export default function RoomDetailPage() {
         </div>
       )}
 
-      {/* CHAT TAB */}
-      {activeTab === 'chat' && (
-        <div className="space-y-4">
-          <div className="glass-card p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <HiOutlineLockClosed className="w-5 h-5 text-vault-accent" />
-              <p className="text-sm text-gray-400">Messages are encrypted with the room key. The server stores only ciphertext.</p>
-            </div>
-            {messages.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">No messages yet</p>
-            ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {messages.map((m) => (
-                  <div key={m.id} className="p-3 rounded-xl bg-vault-bg/60 border border-vault-border">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-vault-accent">{m.sender_username}</span>
-                      <span className="text-xs text-gray-600">{new Date(m.timestamp).toLocaleTimeString()}</span>
-                    </div>
-                    <p className="text-xs font-mono text-gray-500 truncate" title="Encrypted (client must decrypt)">
-                      🔒 {m.encrypted_message.substring(0, 60)}…
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
