@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# C build artifacts
+*.o
+encrypt_tool
+
+# Local test run outputs
+*.enc
+*.dec
+test/test_files/test_binary
+test/test_files/test_input.txt
+
+# Frontend dependencies and build/cache outputs
+cipherchat/node_modules/
+cipherchat/.parcel-cache/
+cipherchat/dist/
+
+# Optional local env files
+.env
+.env.*
+!.env.example

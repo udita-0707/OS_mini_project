@@ -1,0 +1,18 @@
+{
+  "name": "realtime-chat-app",
+  "version": "1.0.0",
+  "description": "Minimal real-time chat app with React and InstantDB",
+  "scripts": {
+    "dev": "parcel index.html --open",
+    "build": "parcel build index.html"
+  },
+  "dependencies": {
+    "firebase": "^12.9.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "parcel": "^2.9.3",
+    "process": "^0.11.10"
+  }
+}
