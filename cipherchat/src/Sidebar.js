@@ -39,6 +39,12 @@ const Sidebar = ({
     onExploreClick,
     onSettingsClick
 }) => {
+    const orderedChannels = [...channels].sort((a, b) => {
+        if (a.id === 'file-crypto') return -1;
+        if (b.id === 'file-crypto') return 1;
+        return a.name.localeCompare(b.name);
+    });
+
     // Deduplicate members by username so each person shows once
     const uniqueMembers = [];
     const seen = new Set();
@@ -66,8 +72,9 @@ const Sidebar = ({
             </div>
 
             <ul className="channel-list">
-                {channels.map((ch) => {
+                {orderedChannels.map((ch) => {
                     const isActive = ch.id === activeChannel;
+                    const isPinned = ch.id === 'file-crypto';
                     return (
                         <li
                             key={ch.id}
@@ -78,12 +85,13 @@ const Sidebar = ({
                                 <div className="channel-name">
                                     <span className="channel-icon">#</span>
                                     {ch.name}
+                                    {isPinned && <span className="pin-icon" title="Pinned Channel">📌</span>}
                                     {ch.isPrivate && <span className="private-icon" title="Private Channel">🔒</span>}
                                 </div>
                                 <div className="channel-desc">{ch.description}</div>
                             </div>
-                            <span className={`channel-state${isActive ? ' active' : ''}`}>
-                                {isActive ? 'Active' : 'Open'}
+                            <span className={`channel-state${isActive ? ' active' : ''}${isPinned ? ' pinned' : ''}`}>
+                                {isActive ? 'Active' : isPinned ? 'Pinned' : 'Open'}
                             </span>
                         </li>
                     );

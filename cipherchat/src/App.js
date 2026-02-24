@@ -6,12 +6,15 @@ import Sidebar from './Sidebar.js';
 import Chat from './Chat.js';
 
 const DEFAULT_JOINED_CHANNELS = new Set(['general', 'secret', 'dev', 'random', 'file-crypto']);
+const PROTECTED_CHANNEL_ID = 'file-crypto';
 const MODALS = {
     NONE: 'none',
     CREATE: 'create',
     PASSWORD: 'password',
     EXPLORE: 'explore',
-    SETTINGS: 'settings'
+    SETTINGS: 'settings',
+    ABOUT: 'about',
+    DELETE: 'delete'
 };
 
 const App = () => {
@@ -32,7 +35,9 @@ const App = () => {
     const [exploreSearchQuery, setExploreSearchQuery] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [createError, setCreateError] = useState('');
+    const [deleteError, setDeleteError] = useState('');
     const [createChannelPrivate, setCreateChannelPrivate] = useState(false);
+    const [selectedChannel, setSelectedChannel] = useState(null);
 
     useEffect(() => {
         const unsubscribe = onData('channels', async (data) => {
@@ -236,6 +241,61 @@ const App = () => {
         }
     };
 
+    const activeChannelData = channels.find((channel) => channel.id === activeChannel) || null;
+
+    const openAboutChannel = () => {
+        if (!activeChannelData) return;
+        setSelectedChannel(activeChannelData);
+        setDeleteError('');
+        setActiveModal(MODALS.ABOUT);
+    };
+
+    const requestDeleteChannel = (channel = activeChannelData) => {
+        if (!channel || channel.id === PROTECTED_CHANNEL_ID) return;
+        setSelectedChannel(channel);
+        setDeleteError('');
+        setActiveModal(MODALS.DELETE);
+    };
+
+    const handleDeleteChannel = async () => {
+        if (!selectedChannel || selectedChannel.id === PROTECTED_CHANNEL_ID) {
+            setActiveModal(MODALS.NONE);
+            return;
+        }
+
+        const deletingId = selectedChannel.id;
+        try {
+            await Promise.all([
+                deleteData(`channels/${deletingId}`),
+                deleteData(`messages/${deletingId}`),
+                deleteData(`members/${deletingId}`)
+            ]);
+
+            setJoinedChannelIds((prev) => {
+                const next = new Set(prev);
+                next.delete(deletingId);
+                next.add(PROTECTED_CHANNEL_ID);
+                return next;
+            });
+            setUnlockedChannels((prev) => {
+                const next = new Set(prev);
+                next.delete(deletingId);
+                return next;
+            });
+
+            if (activeChannel === deletingId) {
+                await joinChannelInternal(PROTECTED_CHANNEL_ID);
+            }
+
+            setSelectedChannel(null);
+            setDeleteError('');
+            setActiveModal(MODALS.NONE);
+        } catch (err) {
+            setDeleteError('Could not delete this channel right now.');
+            console.warn('Error deleting channel:', err.message);
+        }
+    };
+
     if (dbInitError) {
         return (
             <div className="app-layout">
@@ -274,8 +334,11 @@ const App = () => {
 
             <Chat
                 username={username}
-                channel={channels.find((channel) => channel.id === activeChannel)}
+                channel={activeChannelData}
                 encryptionPassphrase={encryptionPassphrase}
+                onAboutChannel={openAboutChannel}
+                onRequestDeleteChannel={() => requestDeleteChannel(activeChannelData)}
+                canDeleteChannel={Boolean(activeChannelData && activeChannelData.id !== PROTECTED_CHANNEL_ID)}
             />
 
             {showPrompt && (
@@ -471,6 +534,77 @@ const App = () => {
                             </button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {activeModal === MODALS.ABOUT && selectedChannel && (
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <h2>About #{selectedChannel.name}</h2>
+                        <p>{selectedChannel.description || 'No description provided.'}</p>
+                        <p>
+                            Type: <strong>{selectedChannel.isPrivate ? 'Private' : 'Public'}</strong>
+                        </p>
+                        <p>
+                            Status: <strong>{selectedChannel.id === PROTECTED_CHANNEL_ID ? 'Pinned / Protected' : 'Standard'}</strong>
+                        </p>
+                        <div className="modal-actions">
+                            <button
+                                type="button"
+                                className="modal-btn modal-btn-secondary"
+                                onClick={() => {
+                                    setSelectedChannel(null);
+                                    setActiveModal(MODALS.NONE);
+                                }}
+                            >
+                                Close
+                            </button>
+                            {selectedChannel.id !== PROTECTED_CHANNEL_ID ? (
+                                <button
+                                    type="button"
+                                    className="modal-btn modal-btn-danger"
+                                    onClick={() => requestDeleteChannel(selectedChannel)}
+                                >
+                                    Delete Channel
+                                </button>
+                            ) : (
+                                <button type="button" className="modal-btn modal-btn-secondary" disabled>
+                                    Protected Channel
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeModal === MODALS.DELETE && selectedChannel && (
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <h2>Delete #{selectedChannel.name}?</h2>
+                        <p>
+                            This permanently removes the channel, all messages, and member presence data.
+                        </p>
+                        {deleteError && <p className="modal-error">{deleteError}</p>}
+                        <div className="modal-actions">
+                            <button
+                                type="button"
+                                className="modal-btn modal-btn-secondary"
+                                onClick={() => {
+                                    setDeleteError('');
+                                    setActiveModal(MODALS.ABOUT);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="modal-btn modal-btn-danger"
+                                onClick={handleDeleteChannel}
+                            >
+                                Confirm Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

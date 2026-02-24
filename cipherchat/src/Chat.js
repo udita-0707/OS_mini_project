@@ -20,7 +20,14 @@ const getStringColor = (str) => {
     return `hsl(${h}, 65%, 55%)`;
 };
 
-const Chat = ({ username, channel, encryptionPassphrase }) => {
+const Chat = ({
+    username,
+    channel,
+    encryptionPassphrase,
+    onAboutChannel,
+    onRequestDeleteChannel,
+    canDeleteChannel
+}) => {
     const channelId = channel ? channel.id : null;
     const [cipherType, setCipherType] = useState('emoji');
     const [newMessage, setNewMessage] = useState('');
@@ -164,6 +171,25 @@ const Chat = ({ username, channel, encryptionPassphrase }) => {
                         onClick={() => setCipherType('block')}
                     >
                         AES-256
+                    </button>
+                </div>
+                <div className="chat-header-actions">
+                    <button
+                        type="button"
+                        className="icon-btn"
+                        title="About this channel"
+                        onClick={onAboutChannel}
+                    >
+                        ⓘ
+                    </button>
+                    <button
+                        type="button"
+                        className="icon-btn icon-btn-danger"
+                        title={canDeleteChannel ? 'Delete this channel' : 'This channel is protected'}
+                        onClick={onRequestDeleteChannel}
+                        disabled={!canDeleteChannel}
+                    >
+                        🗑
                     </button>
                 </div>
             </div>
@@ -341,6 +367,7 @@ const FileCryptoPanel = ({ encryptionPassphrase }) => {
 const MessageItem = ({ msg, encryptionPassphrase }) => {
     const [decryptedText, setDecryptedText] = useState('');
     const [decryptFailed, setDecryptFailed] = useState(false);
+    const [showEncrypted, setShowEncrypted] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -383,6 +410,9 @@ const MessageItem = ({ msg, encryptionPassphrase }) => {
             <div className="msg-content">
                 <div className="msg-header">
                     <span className="msg-sender">{msg.sender}</span>
+                    <span className={`msg-cipher-tag${msg.cipherType === 'block' ? ' secure' : ''}`}>
+                        {msg.cipherType === 'block' ? 'AES' : 'EMOJI'}
+                    </span>
                     <span className="msg-time">
                         {new Date(msg.timestamp).toLocaleString([], {
                             year: 'numeric',
@@ -394,10 +424,19 @@ const MessageItem = ({ msg, encryptionPassphrase }) => {
                     </span>
                 </div>
                 <div className={`msg-text${decryptFailed ? ' msg-text-error' : ''}`}>{decryptedText}</div>
-                <div className="msg-encrypted-pill">
-                    <span className="msg-encrypted-label">encrypted</span>
-                    <span className="msg-encrypted-val" title={msg.encryptedText}>{msg.encryptedText}</span>
-                </div>
+                <button
+                    type="button"
+                    className="msg-encrypted-toggle"
+                    onClick={() => setShowEncrypted((prev) => !prev)}
+                >
+                    {showEncrypted ? '🙈 Hide Cipher Text' : '🔐 View Cipher Text'}
+                </button>
+                {showEncrypted && (
+                    <div className="msg-encrypted-pill">
+                        <span className="msg-encrypted-label">encrypted</span>
+                        <span className="msg-encrypted-val" title={msg.encryptedText}>{msg.encryptedText}</span>
+                    </div>
+                )}
             </div>
         </div>
     );
