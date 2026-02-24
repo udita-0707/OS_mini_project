@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { pushData, onData } from './db.js';
-import { emojiEncrypt, emojiDecrypt, blockEncrypt, blockDecrypt } from './ciphers.js';
+import {
+    emojiEncrypt,
+    emojiDecrypt,
+    blockEncrypt,
+    blockDecrypt,
+    encryptFileBytes,
+    decryptFileBytes
+} from './ciphers.js';
+
+const FILE_CRYPTO_CHANNEL_ID = 'file-crypto';
 
 const getStringColor = (str) => {
     let hash = 0;
@@ -165,6 +174,10 @@ const Chat = ({ username, channel, encryptionPassphrase }) => {
                 </div>
             )}
 
+            {channelId === FILE_CRYPTO_CHANNEL_ID && (
+                <FileCryptoPanel encryptionPassphrase={encryptionPassphrase} />
+            )}
+
             <div className="messages-list" ref={messagesListRef} onScroll={handleListScroll}>
                 {isLoading && (
                     <div className="chat-empty">
@@ -213,6 +226,115 @@ const Chat = ({ username, channel, encryptionPassphrase }) => {
                 </form>
             </div>
         </div>
+    );
+};
+
+const FileCryptoPanel = ({ encryptionPassphrase }) => {
+    const [mode, setMode] = useState('encrypt');
+    const [passphrase, setPassphrase] = useState(encryptionPassphrase || '');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [error, setError] = useState('');
+    const [status, setStatus] = useState('');
+    const [isWorking, setIsWorking] = useState(false);
+
+    useEffect(() => {
+        setPassphrase(encryptionPassphrase || '');
+    }, [encryptionPassphrase]);
+
+    const outputName = useMemo(() => {
+        if (!selectedFile) return '';
+        if (mode === 'encrypt') return `${selectedFile.name}.enc`;
+        return selectedFile.name.endsWith('.enc')
+            ? selectedFile.name.slice(0, -4)
+            : `${selectedFile.name}.dec`;
+    }, [selectedFile, mode]);
+
+    const handleProcess = async (e) => {
+        e.preventDefault();
+        setError('');
+        setStatus('');
+
+        if (!selectedFile) {
+            setError('Choose a file first.');
+            return;
+        }
+        if (!passphrase.trim()) {
+            setError('Enter a passphrase.');
+            return;
+        }
+
+        setIsWorking(true);
+        try {
+            const bytes = new Uint8Array(await selectedFile.arrayBuffer());
+            const result = mode === 'encrypt'
+                ? await encryptFileBytes(bytes, passphrase.trim())
+                : await decryptFileBytes(bytes, passphrase.trim());
+
+            const blob = new Blob([result], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = outputName || `processed-${Date.now()}.bin`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+            URL.revokeObjectURL(url);
+            setStatus(`Done. Downloaded ${anchor.download}`);
+        } catch (err) {
+            setError(err?.message || 'File crypto operation failed.');
+        } finally {
+            setIsWorking(false);
+        }
+    };
+
+    return (
+        <form className="file-crypto-panel" onSubmit={handleProcess}>
+            <div className="file-crypto-header">
+                <h3>File Encryption / Decryption</h3>
+                <div className="file-crypto-tabs">
+                    <button
+                        type="button"
+                        className={`file-crypto-tab${mode === 'encrypt' ? ' active' : ''}`}
+                        onClick={() => setMode('encrypt')}
+                    >
+                        Encrypt
+                    </button>
+                    <button
+                        type="button"
+                        className={`file-crypto-tab${mode === 'decrypt' ? ' active' : ''}`}
+                        onClick={() => setMode('decrypt')}
+                    >
+                        Decrypt
+                    </button>
+                </div>
+            </div>
+            <p className="file-crypto-note">
+                AES-256-GCM in browser. Files are processed locally and downloaded.
+            </p>
+            <input
+                className="file-crypto-input"
+                type="file"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+            />
+            <input
+                className="file-crypto-input"
+                type="password"
+                value={passphrase}
+                onChange={(e) => setPassphrase(e.target.value)}
+                placeholder="Passphrase"
+            />
+            {selectedFile && (
+                <div className="file-crypto-meta">
+                    <span>Input: {selectedFile.name}</span>
+                    <span>Output: {outputName}</span>
+                </div>
+            )}
+            {error && <p className="file-crypto-error">{error}</p>}
+            {status && <p className="file-crypto-status">{status}</p>}
+            <button type="submit" className="file-crypto-run" disabled={isWorking}>
+                {isWorking ? 'Processing...' : mode === 'encrypt' ? 'Encrypt & Download' : 'Decrypt & Download'}
+            </button>
+        </form>
     );
 };
 

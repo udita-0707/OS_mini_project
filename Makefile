@@ -3,8 +3,8 @@
 
 # Compiler settings
 CC = gcc
-CFLAGS = -Wall -Wextra -g -O2 -I./include -I/opt/homebrew/opt/ncurses/include
-LDFLAGS = -L/opt/homebrew/opt/ncurses/lib -lncurses
+CFLAGS = -Wall -Wextra -g -O2 -I./include -I/opt/homebrew/opt/ncurses/include -I/opt/homebrew/opt/openssl@3/include
+LDFLAGS = -L/opt/homebrew/opt/ncurses/lib -L/opt/homebrew/opt/openssl@3/lib -lncurses -lcrypto
 
 # Target executable
 TARGET = encrypt_tool
@@ -52,21 +52,16 @@ test: $(TARGET) setup-test
 	@echo "Creating test file..."
 	@echo "Hello, World! This is a test message for encryption." > $(TEST_DIR)/test_input.txt
 	@echo ""
-	@echo "─── Caesar Cipher Test (key=5) ───"
-	@./$(TARGET) -e -a caesar -k 5 -i $(TEST_DIR)/test_input.txt -o $(TEST_DIR)/test_caesar.enc
-	@./$(TARGET) -d -a caesar -k 5 -i $(TEST_DIR)/test_caesar.enc -o $(TEST_DIR)/test_caesar.dec
-	@diff $(TEST_DIR)/test_input.txt $(TEST_DIR)/test_caesar.dec && echo "Caesar Cipher: PASS ✓" || echo "Caesar Cipher: FAIL ✗"
+	@echo "─── AES-256-GCM Text Roundtrip Test ───"
+	@./$(TARGET) -e -k mykey -i $(TEST_DIR)/test_input.txt -o $(TEST_DIR)/test_text.enc
+	@./$(TARGET) -d -k mykey -i $(TEST_DIR)/test_text.enc -o $(TEST_DIR)/test_text.dec
+	@diff $(TEST_DIR)/test_input.txt $(TEST_DIR)/test_text.dec && echo "AES Text: PASS ✓" || echo "AES Text: FAIL ✗"
 	@echo ""
-	@echo "─── XOR Cipher Test (key=mykey) ───"
-	@./$(TARGET) -e -a xor -k mykey -i $(TEST_DIR)/test_input.txt -o $(TEST_DIR)/test_xor.enc
-	@./$(TARGET) -d -a xor -k mykey -i $(TEST_DIR)/test_xor.enc -o $(TEST_DIR)/test_xor.dec
-	@diff $(TEST_DIR)/test_input.txt $(TEST_DIR)/test_xor.dec && echo "XOR Cipher: PASS ✓" || echo "XOR Cipher: FAIL ✗"
-	@echo ""
-	@echo "─── Binary File Test ───"
+	@echo "─── AES-256-GCM Binary File Test ───"
 	@cp /bin/ls $(TEST_DIR)/test_binary 2>/dev/null || cp /bin/echo $(TEST_DIR)/test_binary
-	@./$(TARGET) -e -a xor -k secret123 -i $(TEST_DIR)/test_binary -o $(TEST_DIR)/test_binary.enc
-	@./$(TARGET) -d -a xor -k secret123 -i $(TEST_DIR)/test_binary.enc -o $(TEST_DIR)/test_binary.dec
-	@diff $(TEST_DIR)/test_binary $(TEST_DIR)/test_binary.dec && echo "Binary XOR: PASS ✓" || echo "Binary XOR: FAIL ✗"
+	@./$(TARGET) -e -k secret123 -i $(TEST_DIR)/test_binary -o $(TEST_DIR)/test_binary.enc
+	@./$(TARGET) -d -k secret123 -i $(TEST_DIR)/test_binary.enc -o $(TEST_DIR)/test_binary.dec
+	@diff $(TEST_DIR)/test_binary $(TEST_DIR)/test_binary.dec && echo "AES Binary: PASS ✓" || echo "AES Binary: FAIL ✗"
 	@echo ""
 	@echo "╔══════════════════════════════════════════════════════╗"
 	@echo "║              All Tests Complete                      ║"

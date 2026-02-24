@@ -1,11 +1,3 @@
-// ============================================================
-// db.js — Firebase initialization & exports
-// ============================================================
-// This module initializes the Firebase client and exports
-// the standalone helpers so every component can import
-// from one place.
-// ============================================================
-
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, push, set, remove, onValue } from 'firebase/database';
 
@@ -32,22 +24,43 @@ const requiredFields = [
 
 const missingFields = requiredFields.filter((field) => !firebaseConfig[field]);
 
-if (missingFields.length) {
-    throw new Error(`Missing Firebase configuration fields: ${missingFields.join(', ')}`);
+export const dbInitError = missingFields.length
+    ? `Missing Firebase configuration fields: ${missingFields.join(', ')}`
+    : null;
+
+let db = null;
+if (!dbInitError) {
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
 }
 
-// Initialize the Firebase app
-const app = initializeApp(firebaseConfig);
+const dbUnavailableError = () => new Error(dbInitError || 'Firebase is not initialized');
 
-// Get a reference to the Realtime Database service
-const db = getDatabase(app);
+export const dbRef = (path) => {
+    if (!db) return null;
+    return ref(db, path);
+};
 
-// Helper wrapper functions
-export const dbRef = (path) => ref(db, path);
-export const pushData = (path, data) => push(dbRef(path), data);
-export const setData = (path, data) => set(dbRef(path), data);
-export const deleteData = (path) => remove(dbRef(path));
+export const pushData = (path, data) => {
+    if (!db) return Promise.reject(dbUnavailableError());
+    return push(ref(db, path), data);
+};
+
+export const setData = (path, data) => {
+    if (!db) return Promise.reject(dbUnavailableError());
+    return set(ref(db, path), data);
+};
+
+export const deleteData = (path) => {
+    if (!db) return Promise.reject(dbUnavailableError());
+    return remove(ref(db, path));
+};
+
 export const onData = (path, callback) => {
-    const unsubscribe = onValue(dbRef(path), (snapshot) => callback(snapshot.val()));
+    if (!db) {
+        callback(null);
+        return () => {};
+    }
+    const unsubscribe = onValue(ref(db, path), (snapshot) => callback(snapshot.val()));
     return unsubscribe;
 };

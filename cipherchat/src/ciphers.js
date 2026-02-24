@@ -55,6 +55,10 @@ const PBKDF2_ITERATIONS = 250000;
 const SALT_LENGTH = 16;
 const IV_LENGTH = 12;
 const PAYLOAD_VERSION = 'v1';
+const FILE_MAGIC = 'FENC';
+const FILE_VERSION = 1;
+const FILE_TAG_LENGTH = 16;
+const FILE_HEADER_LENGTH = 4 + 1 + 4 + SALT_LENGTH + IV_LENGTH + FILE_TAG_LENGTH;
 
 const bytesToBase64 = (bytes) => {
     let binary = '';
@@ -140,4 +144,112 @@ export async function blockDecrypt(cipherText, passphrase) {
         encryptedBytes
     );
     return textDecoder.decode(decryptedBuffer);
+}
+
+const strToBytes = (value) => textEncoder.encode(value);
+
+const bytesToStr = (bytes) => textDecoder.decode(bytes);
+
+const readUint32BE = (bytes, offset) => (
+    (bytes[offset] << 24)
+    | (bytes[offset + 1] << 16)
+    | (bytes[offset + 2] << 8)
+    | bytes[offset + 3]
+);
+
+const writeUint32BE = (target, offset, value) => {
+    target[offset] = (value >>> 24) & 0xff;
+    target[offset + 1] = (value >>> 16) & 0xff;
+    target[offset + 2] = (value >>> 8) & 0xff;
+    target[offset + 3] = value & 0xff;
+};
+
+export async function encryptFileBytes(fileBytes, passphrase) {
+    if (!passphrase) {
+        throw new Error('Missing encryption passphrase');
+    }
+
+    const plainBytes = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
+    const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+    const key = await deriveKey(passphrase, salt);
+
+    const encryptedBuffer = await crypto.subtle.encrypt(
+        { name: AES_ALGO, iv },
+        key,
+        plainBytes
+    );
+    const encryptedBytes = new Uint8Array(encryptedBuffer);
+    if (encryptedBytes.length < FILE_TAG_LENGTH) {
+        throw new Error('Encryption produced invalid payload');
+    }
+    const ciphertext = encryptedBytes.slice(0, encryptedBytes.length - FILE_TAG_LENGTH);
+    const tag = encryptedBytes.slice(encryptedBytes.length - FILE_TAG_LENGTH);
+
+    const output = new Uint8Array(FILE_HEADER_LENGTH + ciphertext.length);
+    output.set(strToBytes(FILE_MAGIC), 0);
+    output[4] = FILE_VERSION;
+    writeUint32BE(output, 5, PBKDF2_ITERATIONS);
+    output.set(salt, 9);
+    output.set(iv, 9 + SALT_LENGTH);
+    output.set(tag, 9 + SALT_LENGTH + IV_LENGTH);
+    output.set(ciphertext, FILE_HEADER_LENGTH);
+    return output;
+}
+
+export async function decryptFileBytes(fileBytes, passphrase) {
+    if (!passphrase) {
+        throw new Error('Missing encryption passphrase');
+    }
+
+    const payload = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
+    if (payload.length < FILE_HEADER_LENGTH) {
+        throw new Error('Invalid encrypted file format');
+    }
+
+    const magic = bytesToStr(payload.slice(0, 4));
+    const version = payload[4];
+    if (magic !== FILE_MAGIC || version !== FILE_VERSION) {
+        throw new Error('Unsupported encrypted file format');
+    }
+
+    const iterations = readUint32BE(payload, 5);
+    if (iterations < 10000) {
+        throw new Error('Unsupported encrypted file format');
+    }
+
+    const salt = payload.slice(9, 9 + SALT_LENGTH);
+    const iv = payload.slice(9 + SALT_LENGTH, 9 + SALT_LENGTH + IV_LENGTH);
+    const tag = payload.slice(9 + SALT_LENGTH + IV_LENGTH, FILE_HEADER_LENGTH);
+    const ciphertext = payload.slice(FILE_HEADER_LENGTH);
+    const encrypted = new Uint8Array(ciphertext.length + tag.length);
+    encrypted.set(ciphertext, 0);
+    encrypted.set(tag, ciphertext.length);
+
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        textEncoder.encode(passphrase),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+    );
+    const key = await crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt,
+            iterations,
+            hash: PBKDF2_HASH
+        },
+        keyMaterial,
+        { name: AES_ALGO, length: 256 },
+        false,
+        ['decrypt']
+    );
+
+    const decryptedBuffer = await crypto.subtle.decrypt(
+        { name: AES_ALGO, iv },
+        key,
+        encrypted
+    );
+    return new Uint8Array(decryptedBuffer);
 }

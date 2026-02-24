@@ -1,8 +1,5 @@
 /*
- * encryption.h - Encryption algorithm declarations
- * 
- * File Encryption & Decryption Tool
- * OS Course Project - Phase 1
+ * encryption.h - AES-256-GCM file encryption declarations
  */
 
 #ifndef ENCRYPTION_H
@@ -10,45 +7,38 @@
 
 #include <stddef.h>
 
-/* Algorithm types */
-typedef enum {
-    ALG_CAESAR,
-    ALG_XOR
-} algorithm_t;
+#define ENC_SUCCESS 0
+#define ENC_ERR_INVALID_ARG -1
+#define ENC_ERR_MEMORY -2
+#define ENC_ERR_RANDOM -3
+#define ENC_ERR_KEY_DERIVATION -4
+#define ENC_ERR_ENCRYPT -5
+#define ENC_ERR_DECRYPT -6
+#define ENC_ERR_INVALID_FORMAT -7
 
 /*
- * Caesar Cipher - Encrypts data by shifting each byte
- * 
- * @param data:  Buffer to encrypt (modified in-place)
- * @param len:   Length of data in bytes
- * @param key:   Shift value (0-255)
- * 
- * Formula: E(x) = (x + key) mod 256
+ * Encrypts plaintext bytes into a binary payload:
+ * [magic(4)][version(1)][iterations(4)][salt(16)][iv(12)][tag(16)][ciphertext]
  */
-void caesar_encrypt(unsigned char *data, size_t len, int key);
+int aes_encrypt_payload(
+    const unsigned char *plaintext,
+    size_t plaintext_len,
+    const char *passphrase,
+    unsigned char **out_payload,
+    size_t *out_payload_len
+);
 
 /*
- * Caesar Cipher - Decrypts data by reverse shifting
- * 
- * @param data:  Buffer to decrypt (modified in-place)
- * @param len:   Length of data in bytes
- * @param key:   Original shift value used for encryption
- * 
- * Formula: D(x) = (x - key + 256) mod 256
+ * Decrypts payload produced by aes_encrypt_payload back into plaintext bytes.
  */
-void caesar_decrypt(unsigned char *data, size_t len, int key);
+int aes_decrypt_payload(
+    const unsigned char *payload,
+    size_t payload_len,
+    const char *passphrase,
+    unsigned char **out_plaintext,
+    size_t *out_plaintext_len
+);
 
-/*
- * XOR Cipher - Encrypts/Decrypts data using XOR operation
- * 
- * @param data:     Buffer to process (modified in-place)
- * @param len:      Length of data in bytes
- * @param key:      Key string
- * @param key_len:  Length of key string
- * 
- * Note: XOR is self-inverting, same function encrypts and decrypts
- * Formula: data[i] ^= key[i % key_len]
- */
-void xor_cipher(unsigned char *data, size_t len, const char *key, size_t key_len);
+const char *enc_strerror(int error_code);
 
 #endif /* ENCRYPTION_H */

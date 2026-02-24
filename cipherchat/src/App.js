@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { pushData, setData, deleteData, onData } from './db.js';
+import { pushData, setData, deleteData, onData, dbInitError } from './db.js';
 import CHANNELS from './channels.js';
 import Sidebar from './Sidebar.js';
 import Chat from './Chat.js';
 
-const DEFAULT_JOINED_CHANNELS = new Set(['general', 'secret', 'dev', 'random']);
+const DEFAULT_JOINED_CHANNELS = new Set(['general', 'secret', 'dev', 'random', 'file-crypto']);
 const MODALS = {
     NONE: 'none',
     CREATE: 'create',
@@ -39,6 +39,16 @@ const App = () => {
             if (!data || Object.keys(data).length === 0) {
                 await Promise.all(
                     CHANNELS.map((channel) => setData(`channels/${channel.id}`, channel))
+                );
+                return;
+            }
+
+            const missingDefaultChannels = CHANNELS.filter((channel) => !data[channel.id]);
+            if (missingDefaultChannels.length) {
+                await Promise.all(
+                    missingDefaultChannels.map((channel) =>
+                        setData(`channels/${channel.id}`, channel)
+                    )
                 );
                 return;
             }
@@ -225,6 +235,23 @@ const App = () => {
             setActiveModal(MODALS.NONE);
         }
     };
+
+    if (dbInitError) {
+        return (
+            <div className="app-layout">
+                <div className="chat-area" style={{ display: 'grid', placeItems: 'center' }}>
+                    <div className="modal-card" style={{ maxWidth: 640 }}>
+                        <h2>Firebase Configuration Needed</h2>
+                        <p>{dbInitError}</p>
+                        <p>
+                            Put your env file at <strong>cipherchat/.env</strong> (not <code>cipherchat/src/.env</code>)
+                            and restart the dev server.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="app-layout">
