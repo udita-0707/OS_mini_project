@@ -332,7 +332,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Pre-load audio
-    audioRef.current = new Audio('/ambience.mp3');
+    audioRef.current = new Audio('/agerabeatz-security-225719.mp3');
     audioRef.current.loop = true;
     audioRef.current.volume = 0.4;
 
