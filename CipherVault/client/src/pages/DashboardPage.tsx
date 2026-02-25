@@ -18,6 +18,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fileAPI, securityAPI } from '../api';
 import { motion, useMotionValue, useSpring, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   Chart as ChartJS,
   ArcElement, Tooltip, Legend,
@@ -30,6 +31,8 @@ import {
   HiOutlineClock,
   HiOutlineExclamationTriangle,
   HiOutlineServerStack,
+  HiOutlineSpeakerWave,
+  HiOutlineSpeakerXMark,
 } from 'react-icons/hi2';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
@@ -323,6 +326,34 @@ export default function DashboardPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const pulse = usePulse(4000);
 
+  // Audio state
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Pre-load audio
+    audioRef.current = new Audio('/ambience.mp3');
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.4;
+
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
+
+  const toggleMusic = () => {
+    if (!audioRef.current) return;
+    if (isMusicPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(() => {
+        toast.error('Interaction required to play audio');
+      });
+    }
+    setIsMusicPlaying(!isMusicPlaying);
+  };
+
   useEffect(() => {
     fileAPI.stats().then((r) => setStats(r.data)).catch(() => { });
     securityAPI.getAuditLogs(10).then((r) => setLogs(r.data.logs)).catch(() => { });
@@ -483,15 +514,51 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Live connection pill */}
-          <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#00f5ff]/5 border border-[#00f5ff]/20 backdrop-blur-sm">
-            <motion.div
-              className="w-2 h-2 rounded-full bg-[#00f5ff]"
-              animate={{ scale: pulse ? [1, 1.6, 1] : 1, opacity: [1, 0.4, 1] }}
-              transition={{ duration: 0.6 }}
-              style={{ boxShadow: '0 0 8px #00f5ff' }}
-            />
-            <span className="text-[10px] font-black text-[#00f5ff] uppercase tracking-[0.2em]">Live Connection</span>
+          {/* Actions and connection status */}
+          <div className="flex items-center gap-3">
+            {/* Music Toggle */}
+            <motion.button
+              onClick={toggleMusic}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-300 backdrop-blur-sm ${isMusicPlaying ? 'bg-vault-accent/10 border-vault-accent/40 text-vault-accent' : 'bg-white/5 border-white/10 text-gray-500'}`}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={isMusicPlaying ? 'on' : 'off'}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {isMusicPlaying ? <HiOutlineSpeakerWave className="w-4 h-4" /> : <HiOutlineSpeakerXMark className="w-4 h-4" />}
+                </motion.div>
+              </AnimatePresence>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Ambience</span>
+              {isMusicPlaying && (
+                <div className="flex gap-0.5 items-end h-2 ml-1">
+                  {[0.4, 0.7, 0.5].map((h, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-[2px] bg-vault-accent rounded-full"
+                      animate={{ height: ['20%', '100%', '20%'] }}
+                      transition={{ duration: 0.6 + i * 0.2, repeat: Infinity, ease: 'easeInOut' }}
+                    />
+                  ))}
+                </div>
+              )}
+            </motion.button>
+
+            {/* Live connection pill */}
+            <div className="flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#00f5ff]/5 border border-[#00f5ff]/20 backdrop-blur-sm">
+              <motion.div
+                className="w-2 h-2 rounded-full bg-[#00f5ff]"
+                animate={{ scale: pulse ? [1, 1.6, 1] : 1, opacity: [1, 0.4, 1] }}
+                transition={{ duration: 0.6 }}
+                style={{ boxShadow: '0 0 8px #00f5ff' }}
+              />
+              <span className="text-[10px] font-black text-[#00f5ff] uppercase tracking-[0.2em]">Live Connection</span>
+            </div>
           </div>
         </motion.div>
 
