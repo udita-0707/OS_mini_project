@@ -35,6 +35,7 @@ import {
   HiOutlineCheckCircle, HiOutlineClock, HiOutlineTrash,
   HiOutlineLink, HiOutlineServer, HiOutlineArchiveBox,
   HiOutlineNoSymbol, HiOutlineCircleStack,
+  HiOutlineSpeakerWave, HiOutlineSpeakerXMark,
 } from 'react-icons/hi2';
 
 /* ─── CONSTANTS ─────────────────────────────────────────────────────────── */
@@ -741,6 +742,35 @@ export default function LandingPage() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [loginShake, setLoginShake] = useState(false);
   const [biometricScan, setBiometricScan] = useState(false);
+
+  // Audio system
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio('/agerabeatz-security-225719.mp3');
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.45;
+
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
+
+  const toggleMusic = () => {
+    if (!audioRef.current) return;
+    if (isMusicPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(() => {
+        toast.error('Engagement required to start broadcast.', {
+          style: { background: '#080d14', color: '#00ff88', border: '1px solid #00ff8820', fontSize: '10px', fontWeight: 'bold' },
+        });
+      });
+    }
+    setIsMusicPlaying(!isMusicPlaying);
+  };
 
   const heroRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
